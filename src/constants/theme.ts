@@ -1,0 +1,41 @@
+export const lightColors = {
+  background: '#F8F9FA',
+  surface: '#FFFFFF',
+  surfaceSecondary: 'rgba(255, 255, 255, 0.9)',
+  textPrimary: '#1C1C1E',
+  textSecondary: '#9E9E9E',
+  primary: '#34C759',
+  primaryGradientStart: '#34C759',
+  primaryGradientEnd: '#2EAE4E',
+  border: 'rgba(0,0,0,0.05)',
+  borderSecondary: '#F2F2F7',
+  icon: '#1C1C1E',
+  iconMuted: '#9E9E9E',
+  gradientBg: ['#D5F3E0', '#F8F9FA', '#FFFFFF'],
+  gradientBgAlt: ['#D5F3E0', '#E8F8EC', '#F8F9FA'],
+  avatarBg: '#E8F8EC',
+  shadow: '#000000',
+  error: '#FF3B30',
+};
+
+export const darkColors = {
+  background: '#121212',
+  surface: '#1E1E1E',
+  surfaceSecondary: 'rgba(30, 30, 30, 0.9)',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#A0A0A0',
+  primary: '#34C759',
+  primaryGradientStart: '#34C759',
+  primaryGradientEnd: '#2EAE4E',
+  border: 'rgba(255,255,255,0.1)',
+  borderSecondary: '#2C2C2E',
+  icon: '#FFFFFF',
+  iconMuted: '#A0A0A0',
+  gradientBg: ['#0A1C12', '#121212', '#121212'],
+  gradientBgAlt: ['#0A1C12', '#162319', '#121212'],
+  avatarBg: '#1A3322',
+  shadow: '#000000',
+  error: '#FF453A',
+};
+
+export type ThemeColors = typeof lightColors;

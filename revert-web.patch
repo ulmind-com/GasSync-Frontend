@@ -1,0 +1,53 @@
+--- src/pages/Home.tsx
++++ src/pages/Home.tsx
+@@ -75,11 +75,11 @@
+     return [...raw].sort((a, b) => calculateDistanceMiles(lat, lon, a.lat, a.lon) - calculateDistanceMiles(lat, lon, b.lat, b.lon));
+   }, [nearbyStations, lat, lon]);
+ 
+-  // 2. Fetch prices for top 8 stations (Market Overview & Market Tab) - Matches Mobile
++  // 2. Fetch prices for top 10 stations (Market Overview & Market Tab)
+   const { data: stationsWithPrices, isLoading: pricesLoading } = useQuery({
+-    queryKey: ['home-station-prices', stations.slice(0, 8).map(s => s.id).sort().join(',')],
++    queryKey: ['home-station-prices', stations.slice(0, 10).map(s => s.id).sort().join(',')],
+     queryFn: async (): Promise<StationWithPrices[]> => {
+-      const toFetch = stations.slice(0, 8);
++      const toFetch = stations.slice(0, 10);
+       if (toFetch.length === 0) return [];
+ 
+       const results = await Promise.allSettled(
+@@ -142,12 +142,20 @@
+     return { lowestPrice, highestPrice, lowestStation, highestStation, avgPrice, fuelBreakdown };
+   }, [stationsWithPrices]);
+ 
+-  // All community prices across all stations (Matches Mobile app exactly)
+-  const allCommunityPrices = useMemo(() => {
+-    return (stationsWithPrices || [])
+-      .flatMap(sp => sp.communityPrices.map(cp => ({ ...cp, stationName: sp.station.name, stationId: sp.station.id })))
+-      .sort((a, b) => new Date(b.billDate || 0).getTime() - new Date(a.billDate || 0).getTime());
+-  }, [stationsWithPrices]);
++  // 3b. Fetch community prices for ALL nearby stations efficiently
++  const { data: allCommunityPricesData, isLoading: communityPricesLoading } = useQuery({
++    queryKey: ['home-community-prices', stations.map(s => s.id).sort().join(',')],
++    queryFn: async () => {
++      const placeIds = stations.map(s => s.id);
++      if (placeIds.length === 0) return [];
++      const res = await api.post('/prices/community/by-places', { placeIds });
++      return res.data?.data || [];
++    },
++    enabled: stations.length > 0,
++    refetchInterval: 15000,
++  });
++
++  const allCommunityPrices = allCommunityPricesData || [];
+ 
+   const formatDate = (dateString?: string) => {
+     if (!dateString) return 'Recently';
+@@ -449,7 +457,7 @@
+               <h2 className="font-bold text-xl text-gray-900">{t('home.communityReports')}</h2>
+             </div>
+             
+-            {pricesLoading ? (
++            {communityPricesLoading ? (
+               <div className="flex flex-col items-center justify-center mt-10 gap-3">
+                 <Loader2 size={32} className="text-[#34C759] animate-spin" />
+                 <p className="font-medium text-[15px] text-gray-500 text-center">Loading community reports...</p>

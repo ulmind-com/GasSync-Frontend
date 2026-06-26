@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @import url('https://api.fontshare.com/v2/css?f[]=general-sans@200,300,400,500,600,700&display=swap');
+
+  :root {
+    /* Light Theme (Default) */
+    --color-background: #F8F9FA;
+    --color-surface: #FFFFFF;
+    --color-surface-secondary: rgba(255, 255, 255, 0.9);
+    --color-text-primary: #1C1C1E;
+    --color-text-secondary: #9E9E9E;
+    --color-primary: #34C759;
+    --color-primary-gradient-start: #34C759;
+    --color-primary-gradient-end: #2EAE4E;
+    --color-border: rgba(0,0,0,0.05);
+    --color-border-secondary: #F2F2F7;
+    --color-icon: #1C1C1E;
+    --color-icon-muted: #9E9E9E;
+    --color-avatar-bg: #E8F8EC;
+    --color-shadow: #000000;
+    --color-error: #FF3B30;
+  }
+
+  .dark {
+    /* Dark Theme */
+    --color-background: #121212;
+    --color-surface: #1E1E1E;
+    --color-surface-secondary: rgba(30, 30, 30, 0.9);
+    --color-text-primary: #FFFFFF;
+    --color-text-secondary: #A0A0A0;
+    --color-primary: #34C759;
+    --color-primary-gradient-start: #34C759;
+    --color-primary-gradient-end: #2EAE4E;
+    --color-border: rgba(255,255,255,0.1);
+    --color-border-secondary: #2C2C2E;
+    --color-icon: #FFFFFF;
+    --color-icon-muted: #A0A0A0;
+    --color-avatar-bg: #1A3322;
+    --color-shadow: #000000;
+    --color-error: #FF453A;
+  }
+
+  body {
+    @apply bg-background text-textPrimary font-sans antialiased;
+  }
+}
+
+/* Custom utilities for gradients to match mobile exactly */
+@layer utilities {
+  .bg-gradient-primary {
+    background: linear-gradient(to right, var(--color-primary-gradient-start), var(--color-primary-gradient-end));
+  }
+  
+  .bg-gradient-glass-light {
+    background: linear-gradient(180deg, #D5F3E0 0%, #F8F9FA 50%, #FFFFFF 100%);
+  }
+
+  .bg-gradient-glass-dark {
+    background: linear-gradient(180deg, #0A1C12 0%, #121212 50%, #121212 100%);
+  }
+
+  .bg-gradient-alt-light {
+    background: linear-gradient(180deg, #D5F3E0 0%, #E8F8EC 50%, #F8F9FA 100%);
+  }
+
+  .bg-gradient-alt-dark {
+    background: linear-gradient(180deg, #0A1C12 0%, #162319 50%, #121212 100%);
+  }
+
+  .glass-effect {
+    @apply bg-surfaceSecondary backdrop-blur-md;
+  }
+}
