@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../lib/axios';
 import { useAuthStore } from '../store/authStore';
 import { useLocationStore } from '../store/locationStore';
+import { useToast } from '../components/Toast';
 
 const FUEL_TYPES = [
   { key: 'regular', label: 'Regular 87' },
@@ -41,6 +42,7 @@ const Scanner = () => {
   const { token } = useAuthStore();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const [searchParams] = useSearchParams();
 
   const stationName = searchParams.get('stationName');
@@ -105,7 +107,7 @@ const Scanner = () => {
       }
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Failed to process receipt.');
+      showToast(error.response?.data?.message || 'Failed to process receipt.', 'error');
     },
   });
 
@@ -130,17 +132,17 @@ const Scanner = () => {
         queryClient.invalidateQueries({ queryKey: ['station-prices', googlePlaceId] });
       }
       
+      showToast('🎉 Price reported! Your bill is now live in the Community tab.', 'success');
       setTimeout(() => {
-        alert('🎉 Price Reported! Your bill has been saved and the price is now visible in the Community tab!');
         if (googlePlaceId) {
           navigate(`/station/${googlePlaceId}`);
         } else {
           navigate('/home');
         }
-      }, 100);
+      }, 900);
     },
     onError: (error: any) => {
-      alert(error.response?.data?.message || 'Could not save price data.');
+      showToast(error.response?.data?.message || 'Could not save price data.', 'error');
     },
   });
 
@@ -167,13 +169,13 @@ const Scanner = () => {
 
   const handleScan = () => {
     if (!token) { navigate('/login'); return; }
-    if (!imageFile) { alert('Take a photo or select an image first.'); return; }
+    if (!imageFile) { showToast('Take a photo or select an image first.', 'warning'); return; }
     scanMutation.mutate(imageFile);
   };
 
   const handleConfirm = () => {
     if (!pricePerGallon || parseFloat(pricePerGallon) <= 0) {
-      alert('Please enter or verify the price per gallon.');
+      showToast('Please enter or verify the price per gallon.', 'warning');
       return;
     }
     confirmMutation.mutate();
