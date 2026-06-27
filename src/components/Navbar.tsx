@@ -1,41 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Compass, MapPin, Heart, User, Fuel, Bell } from 'lucide-react';
+import { Compass, MapPin, Heart, User, Bell } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 
 const Navbar = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
 
   const tabs = [
-    { name: 'Home', path: '/home', icon: Compass },
-    { name: 'Map', path: '/map', icon: MapPin },
-    { name: 'Favorites', path: '/favorites', icon: Heart },
+    { name: t('navbar.home') || 'Home', path: '/home', icon: Compass },
+    { name: t('navbar.map') || 'Map', path: '/map', icon: MapPin },
+    { name: t('navbar.favorites') || 'Favorites', path: '/favorites', icon: Heart },
   ];
 
-  // Don't show navbar on auth screens
   if (['/login', '/register', '/auth/forgot-password'].includes(location.pathname) || location.pathname === '/') {
     return null;
   }
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-lg border-b border-gray-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+    <AnimatePresence mode="wait">
+      <motion.nav
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="fixed top-4 inset-x-0 mx-auto max-w-[90%] sm:max-w-3xl z-50 bg-white/80 backdrop-blur-md border border-gray-200/50 shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] rounded-full px-4 sm:px-6"
+      >
+        <div className="flex justify-between h-14 items-center">
           {/* Logo & Brand */}
           <div 
-            className="flex items-center cursor-pointer gap-2" 
+            className="flex items-center cursor-pointer gap-2 shrink-0" 
             onClick={() => navigate('/home')}
           >
-            <div className="w-10 h-10 bg-[#34C759] rounded-xl flex items-center justify-center">
-              <Fuel size={22} className="text-white" />
-            </div>
-            <span className="font-bold text-xl text-gray-900 tracking-tight hidden sm:block">GasSync</span>
+            <img src="/gassync_logo.png" alt="GasSync" className="w-9 h-9 rounded-xl object-contain" />
+            <span className="font-bold text-lg text-gray-900 tracking-tight hidden md:block">GasSync</span>
           </div>
 
           {/* Navigation Links */}
-          <div className="flex items-center space-x-2 md:space-x-8">
+          <div className="flex items-center justify-center space-x-1 sm:space-x-2 md:space-x-4 flex-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = location.pathname.startsWith(tab.path);
@@ -44,12 +49,12 @@ const Navbar = () => {
                 <NavLink
                   key={tab.name}
                   to={tab.path}
-                  className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 group ${
-                    isActive ? 'bg-[#E8F8EC] text-[#34C759]' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                  className={`flex items-center px-3 py-1.5 rounded-full transition-all duration-200 group ${
+                    isActive ? 'bg-[#34C759] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100/80 hover:text-gray-900'
                   }`}
                 >
-                  <Icon size={20} className={isActive ? 'text-[#34C759]' : 'text-gray-400 group-hover:text-gray-600'} />
-                  <span className={`ml-2 font-medium text-[15px] hidden md:block ${isActive ? 'text-[#34C759]' : 'text-gray-600'}`}>
+                  <Icon size={18} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'} />
+                  <span className={`ml-1.5 font-medium text-[14px] hidden sm:block ${isActive ? 'text-white' : 'text-gray-600'}`}>
                     {tab.name}
                   </span>
                 </NavLink>
@@ -58,31 +63,31 @@ const Navbar = () => {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
             <button 
               onClick={() => navigate('/notifications')}
-              className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors relative"
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors relative"
             >
-              <Bell size={22} />
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#FF3B30] rounded-full border-2 border-white"></span>
+              <Bell size={20} />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-[#FF3B30] rounded-full border-2 border-white"></span>
             </button>
             
             <button 
               onClick={() => navigate('/profile')}
-              className="flex items-center gap-2 pl-2 focus:outline-none"
+              className="flex items-center focus:outline-none"
             >
-              <div className="w-9 h-9 rounded-full bg-[#E8F8EC] flex items-center justify-center overflow-hidden border border-[#34C759]/20">
+              <div className="w-8 h-8 rounded-full bg-[#E8F8EC] flex items-center justify-center overflow-hidden border border-[#34C759]/20 shadow-sm hover:shadow-md transition-shadow">
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <User size={18} className="text-[#34C759]" />
+                  <User size={16} className="text-[#34C759]" />
                 )}
               </div>
             </button>
           </div>
         </div>
-      </div>
-    </nav>
+      </motion.nav>
+    </AnimatePresence>
   );
 };
 
