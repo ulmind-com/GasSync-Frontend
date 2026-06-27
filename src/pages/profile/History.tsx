@@ -162,8 +162,8 @@ export default function History() {
             </div>
             <h2 className="font-semibold text-xl text-gray-900 mb-2">{t('history.noUploads')}</h2>
             <p className="font-medium text-gray-500 text-center max-w-sm mb-6">{t('history.noUploadsSub')}</p>
-            <button 
-              onClick={() => navigate('/scanner')}
+            <button
+              onClick={() => navigate('/home')}
               className="bg-[#34C759] hover:bg-[#2EB350] text-white px-8 py-3 rounded-full font-semibold text-base shadow-md transition-colors flex items-center gap-2"
             >
               <Camera size={18} />
