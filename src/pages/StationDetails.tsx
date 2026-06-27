@@ -527,28 +527,16 @@ export default function StationDetails() {
                 </div>
               </div>
 
-              {/* ── Vote Buttons ── */}
-              <div className="flex items-center gap-3 mb-8">
-                <button 
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl transition-all duration-200 hover:scale-[1.02] active:scale-95 border ${selectedBill.helpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#34C759]/10 border-[#34C759]/30 shadow-sm' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleVote(selectedBill.id, 'helpful');
-                  }}
-                >
-                  <ThumbsUp size={18} className={`transition-colors duration-200 ${selectedBill.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759] fill-[#34C759]/20' : 'text-gray-400'}`} />
-                  <span className={`text-sm font-bold transition-colors duration-200 ${selectedBill.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759]' : 'text-gray-500'}`}>Helpful ({selectedBill.helpfulCount || 0})</span>
-                </button>
-                <button 
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl transition-all duration-200 hover:scale-[1.02] active:scale-95 border ${selectedBill.notHelpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#FF3B30]/10 border-[#FF3B30]/30 shadow-sm' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleVote(selectedBill.id, 'not-helpful');
-                  }}
-                >
-                  <ThumbsDown size={18} className={`transition-colors duration-200 ${selectedBill.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30] fill-[#FF3B30]/20' : 'text-gray-400'}`} />
-                  <span className={`text-sm font-bold transition-colors duration-200 ${selectedBill.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30]' : 'text-gray-500'}`}>Not Helpful ({selectedBill.notHelpfulCount || 0})</span>
-                </button>
+              {/* ── Community feedback (read-only) ── */}
+              <div className="flex items-center justify-center gap-2.5 mb-8">
+                <div className="inline-flex items-center gap-1.5 bg-[#34C759]/10 px-3.5 py-1.5 rounded-full">
+                  <ThumbsUp size={14} className="text-[#34C759] fill-[#34C759]/20" />
+                  <span className="text-[13px] font-bold text-[#34C759]">{selectedBill.helpfulCount || 0}</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 bg-[#FF3B30]/10 px-3.5 py-1.5 rounded-full">
+                  <ThumbsDown size={14} className="text-[#FF3B30] fill-[#FF3B30]/20" />
+                  <span className="text-[13px] font-bold text-[#FF3B30]">{selectedBill.notHelpfulCount || 0}</span>
+                </div>
               </div>
 
               {selectedBill.imageUrl ? (
