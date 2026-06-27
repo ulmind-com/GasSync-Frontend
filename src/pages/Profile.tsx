@@ -69,7 +69,7 @@ export default function Profile() {
       <div className="pt-8 px-6 pb-20 relative z-10 max-w-2xl mx-auto w-full">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.05)] text-gray-800">
+          <button onClick={() => navigate('/home')} className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.05)] text-gray-800">
             <ArrowLeft size={20} />
           </button>
           <h1 className="font-semibold text-xl text-gray-900">{t('profile.title')}</h1>
