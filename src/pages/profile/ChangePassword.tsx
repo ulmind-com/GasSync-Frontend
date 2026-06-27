@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { api } from '../../lib/axios';
+import { useToast } from '../../components/Toast';
 
 export default function ChangePassword() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -21,17 +23,17 @@ export default function ChangePassword() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword || !newPassword || !confirmPassword) {
-      alert(t('common.errorOccurred')); // General error, matching mobile alert logic
+      showToast(t('common.errorOccurred'), 'warning'); // General error, matching mobile alert logic
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      alert(t('changePassword.errorMismatch'));
+      showToast(t('changePassword.errorMismatch'), 'warning');
       return;
     }
 
     if (newPassword.length < 6) {
-      alert(t('changePassword.errorLength'));
+      showToast(t('changePassword.errorLength'), 'warning');
       return;
     }
 
@@ -41,10 +43,10 @@ export default function ChangePassword() {
         currentPassword,
         newPassword
       });
-      alert(t('changePassword.success'));
+      showToast(t('changePassword.success'), 'success');
       navigate(-1);
     } catch (error: any) {
-      alert(error.response?.data?.message || t('changePassword.errorFailed'));
+      showToast(error.response?.data?.message || t('changePassword.errorFailed'), 'error');
     } finally {
       setLoading(false);
     }

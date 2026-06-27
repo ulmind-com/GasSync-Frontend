@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle, BellOff, Lock, ThumbsUp, TrendingDown, Clock, MapPin, Bell, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +31,7 @@ function getRelativeTime(dateString: string) {
 
 export default function Notifications() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { token } = useAuthStore();
   const { t } = useTranslation();
@@ -104,7 +105,7 @@ export default function Notifications() {
             {t('notifications.loginSub')}
           </p>
           <button 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/login?returnTo=' + encodeURIComponent(location.pathname + location.search))}
             className="bg-[#34C759] px-8 py-3.5 rounded-full font-semibold text-[15px] text-white shadow-md hover:bg-[#2EB350] transition-colors"
           >
             {t('auth.signInButton')}

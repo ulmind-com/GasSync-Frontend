@@ -4,9 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check } from 'lucide-react';
 
 const LANGUAGES = [
-  { code: 'en', label: 'English', nativeLabel: 'English' },
-  { code: 'es', label: 'Spanish', nativeLabel: 'Español' },
-  { code: 'bn', label: 'Bengali', nativeLabel: 'বাংলা' }
+  { code: 'en', label: 'English', nativeLabel: 'English', isoCode: 'us' },
+  { code: 'bn', label: 'Bengali', nativeLabel: 'বাংলা', isoCode: 'bd' },
+  { code: 'es', label: 'Spanish', nativeLabel: 'Español', isoCode: 'es' },
+  { code: 'fr', label: 'French', nativeLabel: 'Français', isoCode: 'fr' },
+  { code: 'de', label: 'German', nativeLabel: 'Deutsch', isoCode: 'de' },
+  { code: 'it', label: 'Italian', nativeLabel: 'Italiano', isoCode: 'it' },
+  { code: 'pt', label: 'Portuguese', nativeLabel: 'Português', isoCode: 'pt' },
+  { code: 'hi', label: 'Hindi', nativeLabel: 'हिन्दी', isoCode: 'in' },
+  { code: 'zh', label: 'Chinese', nativeLabel: '中文', isoCode: 'cn' },
+  { code: 'ja', label: 'Japanese', nativeLabel: '日本語', isoCode: 'jp' },
 ];
 
 export default function Language() {
@@ -39,13 +46,18 @@ export default function Language() {
                 onClick={() => changeLanguage(lang.code)}
                 className={`flex items-center justify-between p-4 w-full text-left rounded-2xl transition-colors ${i18n.language === lang.code ? 'bg-[#E8F8EC]' : 'hover:bg-gray-50'}`}
               >
-                <div>
-                  <span className={`block font-semibold text-base ${i18n.language === lang.code ? 'text-[#34C759]' : 'text-gray-900'}`}>
-                    {lang.nativeLabel}
-                  </span>
-                  <span className="block font-medium text-sm text-gray-500 mt-0.5">
-                    {lang.label}
-                  </span>
+                <div className="flex items-center">
+                  <div className="w-8 flex justify-center mr-3 shrink-0">
+                    <img src={`https://flagcdn.com/w40/${lang.isoCode}.png`} alt={lang.label} className="w-5 h-auto rounded-[2px] shadow-sm" />
+                  </div>
+                  <div>
+                    <span className={`block font-semibold text-base ${i18n.language === lang.code ? 'text-[#34C759]' : 'text-gray-900'}`}>
+                      {lang.nativeLabel}
+                    </span>
+                    <span className="block font-medium text-sm text-gray-500 mt-0.5">
+                      {lang.label}
+                    </span>
+                  </div>
                 </div>
                 {i18n.language === lang.code && (
                   <Check size={20} className="text-[#34C759]" />

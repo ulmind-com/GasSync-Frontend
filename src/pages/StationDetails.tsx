@@ -1,12 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Share2, Heart, Star, MapPin, Clock, Navigation, DollarSign, Image as ImageIcon, Droplet, ShoppingBag, Coffee, Zap, User, ThumbsUp, ThumbsDown, X, Maximize2 } from 'lucide-react';
+import { ArrowLeft, Share2, Heart, Star, MapPin, Clock, Navigation, DollarSign, Image as ImageIcon, Droplet, ShoppingBag, Coffee, Zap, User, ThumbsUp, ThumbsDown, X, Maximize2, Fuel } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getPlaceDetails, getPhotoUrl } from '../lib/overpass';
 import { api } from '../lib/axios';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
+import { applyVoteOptimistic, rollbackVote, invalidateVoteQueries } from '../lib/voteCache';
+import type { VoteType } from '../lib/voteCache';
+import { useToast } from '../components/Toast';
 
 const HEADER_HEIGHT = 280;
 
@@ -61,6 +64,7 @@ function getRelativeTime(dateString: string) {
 export default function StationDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { token, user, setFavorites } = useAuthStore();
@@ -89,68 +93,32 @@ export default function StationDetails() {
     staleTime: 1000 * 60 * 60,
   });
 
+  const { showToast } = useToast();
+
   const voteMutation = useMutation({
-    mutationFn: async ({ billId, type }: { billId: string; type: 'helpful' | 'not-helpful' }) => {
+    mutationFn: async ({ billId, type }: { billId: string; type: VoteType }) => {
       const res = await api.post(`/bills/${billId}/${type}`);
       return res.data;
     },
     onMutate: async ({ billId, type }) => {
-      await queryClient.cancelQueries({ queryKey: ['station-prices', id] });
-      const previousData = queryClient.getQueryData(['station-prices', id]);
-      
-      queryClient.setQueryData(['station-prices', id], (oldData: any) => {
-        if (!oldData || !oldData.communityPrices) return oldData;
-        return {
-          ...oldData,
-          communityPrices: oldData.communityPrices.map((cp: any) => {
-            if (cp.id === billId) {
-              const newCp = { ...cp };
-              const userId = user?._id || user?.id;
-              
-              if (type === 'helpful') {
-                const isHelpful = newCp.helpfulUsers?.includes(userId);
-                if (isHelpful) {
-                  newCp.helpfulUsers = newCp.helpfulUsers.filter((u: any) => u !== userId);
-                  newCp.helpfulCount = Math.max(0, (newCp.helpfulCount || 0) - 1);
-                } else {
-                  newCp.helpfulUsers = [...(newCp.helpfulUsers || []), userId];
-                  newCp.helpfulCount = (newCp.helpfulCount || 0) + 1;
-                  newCp.notHelpfulUsers = (newCp.notHelpfulUsers || []).filter((u: any) => u !== userId);
-                  newCp.notHelpfulCount = newCp.notHelpfulUsers.length;
-                }
-              } else {
-                const isNotHelpful = newCp.notHelpfulUsers?.includes(userId);
-                if (isNotHelpful) {
-                  newCp.notHelpfulUsers = newCp.notHelpfulUsers.filter((u: any) => u !== userId);
-                  newCp.notHelpfulCount = Math.max(0, (newCp.notHelpfulCount || 0) - 1);
-                } else {
-                  newCp.notHelpfulUsers = [...(newCp.notHelpfulUsers || []), userId];
-                  newCp.notHelpfulCount = (newCp.notHelpfulCount || 0) + 1;
-                  newCp.helpfulUsers = (newCp.helpfulUsers || []).filter((u: any) => u !== userId);
-                  newCp.helpfulCount = newCp.helpfulUsers.length;
-                }
-              }
-              return newCp;
-            }
-            return cp;
-          }),
-        };
-      });
-      return { previousData };
+      const userId = user?._id || user?.id;
+      if (!userId) return { snapshots: undefined };
+      const snapshots = await applyVoteOptimistic(queryClient, billId, type, userId);
+      return { snapshots };
     },
-    onError: (err, newVote, context: any) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(['station-prices', id], context.previousData);
-      }
+    onError: (_err: any, _vars: any, context: any) => {
+      rollbackVote(queryClient, context?.snapshots);
+      showToast('Failed to register your vote. Please try again.', 'error');
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['station-prices', id] });
+      invalidateVoteQueries(queryClient);
     },
   });
 
   const handleVote = (billId: string, type: 'helpful' | 'not-helpful') => {
     if (!user) {
-      navigate('/login');
+      showToast('Please log in to vote on community reports', 'warning');
+      navigate('/login?returnTo=' + encodeURIComponent(location.pathname + location.search));
       return;
     }
     voteMutation.mutate({ billId, type });
@@ -158,7 +126,7 @@ export default function StationDetails() {
 
   const handleToggleFavorite = async () => {
     if (!token || !user) {
-      navigate('/login');
+      navigate('/login?returnTo=' + encodeURIComponent(location.pathname + location.search));
       return;
     }
     
@@ -192,7 +160,7 @@ export default function StationDetails() {
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      showToast('Link copied to clipboard!', 'success');
     }
   };
 
@@ -300,12 +268,11 @@ export default function StationDetails() {
           {/* Glassmorphic Action Cards */}
           <div className="flex gap-3">
             <div className="flex-1 flex justify-center items-center bg-white border border-gray-100 shadow-sm py-2.5 px-3 rounded-xl">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-2 shrink-0 ${station.isOpen ? 'bg-[#E8F8EC]' : 'bg-[#FF3B30]/10'}`}>
-                <Clock size={16} className={station.isOpen ? "text-[#34C759]" : "text-[#FF3B30]"} />
-              </div>
-              <span className={`font-bold text-[14px] ${station.isOpen ? "text-[#34C759]" : "text-[#FF3B30]"}`}>
-                {station.isOpen === true ? 'Open Now' : station.isOpen === false ? 'Closed' : 'Unknown'}
-              </span>
+              <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-[14px] flex-1 justify-center
+              ${station.isOpen ? 'bg-[#E8F8EC] text-[#34C759] border-[#34C759]/20' : 'bg-[#FFEBEE] text-[#FF3B30] border-[#FF3B30]/20'}`}>
+              <Clock size={18} />
+              {station.isOpen ? t('map.openNow') || 'Open Now' : t('common.closed') || 'Closed'}
+            </div>
             </div>
 
             <button 
@@ -313,9 +280,9 @@ export default function StationDetails() {
               className="flex-1 flex justify-center items-center bg-[#208AEF] border border-[#208AEF] shadow-md shadow-[#208AEF]/20 py-2.5 px-3 rounded-xl hover:bg-[#1C7AD6] hover:scale-[1.02] active:scale-[0.98] transition-all group"
             >
               <div className="w-8 h-8 rounded-lg flex items-center justify-center mr-2 shrink-0 bg-white/20 group-hover:bg-white/30 transition-colors">
-                <Navigation size={16} className="text-white" />
+                <Navigation size={18} fill="currentColor" />
               </div>
-              <span className="font-bold text-[14px] text-white">Navigate</span>
+              <span className="font-bold text-[14px] text-white">{t('station.navigate') || 'Navigate'}</span>
             </button>
           </div>
         </div>
@@ -385,14 +352,14 @@ export default function StationDetails() {
           onClick={() => navigate(`/scanner?googlePlaceId=${id}&stationName=${encodeURIComponent(station?.name || '')}`)}
           className="w-full h-[52px] rounded-2xl bg-gradient-to-r from-[#34C759] to-[#2EB350] hover:from-[#2EB350] hover:to-[#28A045] shadow-md shadow-[#34C759]/20 flex items-center justify-center mb-6 transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
-          <div className="mr-2 text-white font-bold text-lg leading-none -mt-0.5">+</div>
-          <span className="font-bold text-[15px] text-white tracking-wide">Update Price</span>
+          <Fuel size={20} className="text-white mr-2" />
+          <span className="font-bold text-[15px] text-white tracking-wide">{t('station.updatePrice') || 'Update Price'}</span>
         </button>
 
         {/* Prices Section */}
         <div className="bg-white/90 backdrop-blur-xl p-8 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white mb-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="font-bold text-2xl text-gray-900 tracking-tight">Prices & Reports</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-bold text-2xl text-gray-900 tracking-tight">{t('station.pricesAndReports') || 'Prices & Reports'}</h2>
             {priceData?.fetchedAt && (
               <div className="bg-gray-100 px-2.5 py-1 rounded-lg">
                 <span className="font-medium text-xs text-gray-500">
@@ -408,13 +375,13 @@ export default function StationDetails() {
               className={`flex-1 py-2.5 rounded-lg text-center font-semibold text-[13px] transition-colors ${priceTab === 'market' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
               onClick={() => setPriceTab('market')}
             >
-              Market
+              {t('home.market') || 'Market'}
             </button>
             <button 
               className={`flex-1 py-2.5 rounded-lg text-center font-semibold text-[13px] transition-colors ${priceTab === 'community' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
               onClick={() => setPriceTab('community')}
             >
-              Community ({priceData?.communityPrices?.length || 0})
+              {t('home.community') || 'Community'} ({priceData?.communityPrices?.length || 0})
             </button>
           </div>
 
@@ -435,9 +402,9 @@ export default function StationDetails() {
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-center py-6">
-                <DollarSign size={32} className="text-gray-300" />
-                <p className="font-medium text-sm text-gray-500 mt-2">No price data available</p>
+              <div className="flex flex-col items-center justify-center py-16 px-4 bg-gray-50/50 rounded-2xl border border-gray-100 border-dashed">
+                <DollarSign size={48} className="text-gray-300 mb-3" />
+                <p className="font-medium text-[15px] text-gray-500">{t('station.noPriceData') || 'No price data available'}</p>
               </div>
             )
           ) : (
@@ -473,6 +440,28 @@ export default function StationDetails() {
                         <span className="font-normal text-xs text-gray-500">
                           {formatDate(cp.billDate)}
                         </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          className={`flex items-center gap-1.5 transition-all duration-200 hover:scale-110 active:scale-95 rounded-lg px-2 py-1 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#34C759]/10' : 'hover:bg-gray-100'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleVote(cp.id, 'helpful');
+                          }}
+                        >
+                          <ThumbsUp size={14} className={`transition-colors duration-200 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759] fill-[#34C759]/20' : 'text-gray-400'}`} />
+                          <span className={`text-xs font-semibold transition-colors duration-200 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759]' : 'text-gray-500'}`}>{cp.helpfulCount || 0}</span>
+                        </button>
+                        <button 
+                          className={`flex items-center gap-1.5 transition-all duration-200 hover:scale-110 active:scale-95 rounded-lg px-2 py-1 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#FF3B30]/10' : 'hover:bg-gray-100'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleVote(cp.id, 'not-helpful');
+                          }}
+                        >
+                          <ThumbsDown size={14} className={`transition-colors duration-200 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30] fill-[#FF3B30]/20' : 'text-gray-400'}`} />
+                          <span className={`text-xs font-semibold transition-colors duration-200 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30]' : 'text-gray-500'}`}>{cp.notHelpfulCount || 0}</span>
+                        </button>
                       </div>
                     </div>
                   </button>
@@ -536,6 +525,30 @@ export default function StationDetails() {
                   <p className="font-medium text-xs text-gray-500 mb-1">{t('station.totalAmount')}</p>
                   <p className="font-bold text-xl text-gray-900">{selectedBill.totalAmount ? `$${selectedBill.totalAmount.toFixed(2)}` : '—'}</p>
                 </div>
+              </div>
+
+              {/* ── Vote Buttons ── */}
+              <div className="flex items-center gap-3 mb-8">
+                <button 
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl transition-all duration-200 hover:scale-[1.02] active:scale-95 border ${selectedBill.helpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#34C759]/10 border-[#34C759]/30 shadow-sm' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleVote(selectedBill.id, 'helpful');
+                  }}
+                >
+                  <ThumbsUp size={18} className={`transition-colors duration-200 ${selectedBill.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759] fill-[#34C759]/20' : 'text-gray-400'}`} />
+                  <span className={`text-sm font-bold transition-colors duration-200 ${selectedBill.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759]' : 'text-gray-500'}`}>Helpful ({selectedBill.helpfulCount || 0})</span>
+                </button>
+                <button 
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl transition-all duration-200 hover:scale-[1.02] active:scale-95 border ${selectedBill.notHelpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#FF3B30]/10 border-[#FF3B30]/30 shadow-sm' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleVote(selectedBill.id, 'not-helpful');
+                  }}
+                >
+                  <ThumbsDown size={18} className={`transition-colors duration-200 ${selectedBill.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30] fill-[#FF3B30]/20' : 'text-gray-400'}`} />
+                  <span className={`text-sm font-bold transition-colors duration-200 ${selectedBill.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30]' : 'text-gray-500'}`}>Not Helpful ({selectedBill.notHelpfulCount || 0})</span>
+                </button>
               </div>
 
               {selectedBill.imageUrl ? (

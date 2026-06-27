@@ -378,7 +378,7 @@ export default function MapScreen() {
         <div className="fixed inset-0 bg-black/50 z-[110] flex items-end justify-center sm:items-center">
           <div className="bg-white w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl p-5 pb-10 sm:pb-5">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-bold text-xl text-gray-900">Filter Stations</h2>
+              <h2 className="font-bold text-xl text-gray-900">{t('map.filterStations') || 'Filter Stations'}</h2>
               <button onClick={() => setFilterModalVisible(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500">
                 <X size={18} />
               </button>
@@ -386,7 +386,7 @@ export default function MapScreen() {
             
             <div className="space-y-4">
               <div>
-                <h3 className="font-semibold text-base text-gray-900 mb-3">Search Radius</h3>
+                <h3 className="font-semibold text-base text-gray-900 mb-3">{t('map.searchRadius') || 'Search Radius'}</h3>
                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                   {[1, 5, 10, 20, 50].map((r) => (
                     <button
@@ -394,7 +394,7 @@ export default function MapScreen() {
                       onClick={() => setRadius(r)}
                       className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap border transition-colors ${radiusMiles === r ? 'bg-[#E8F8EC] border-[#34C759] text-[#34C759]' : 'bg-white border-gray-200 text-gray-600'}`}
                     >
-                      {r} miles
+                      {r} {t('map.miles') || 'miles'}
                     </button>
                   ))}
                 </div>
@@ -403,26 +403,26 @@ export default function MapScreen() {
               <div className="h-px bg-gray-200 w-full my-4" />
               
               <div>
-                <h3 className="font-semibold text-base text-gray-900 mb-3">Station Features</h3>
+                <h3 className="font-semibold text-base text-gray-900 mb-3">{t('map.stationFeatures') || 'Station Features'}</h3>
                 <div className="flex flex-col gap-2">
                   <button onClick={() => { setFilter('all'); setFilterModalVisible(false); }} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${activeFilter === 'all' ? 'border-[#34C759] bg-[#E8F8EC]' : 'border-gray-200 bg-white'}`}>
                     <List size={18} className={activeFilter === 'all' ? "text-[#34C759]" : "text-gray-400"} />
-                    <span className={`font-medium text-sm flex-1 text-left ${activeFilter === 'all' ? "text-[#34C759]" : "text-gray-600"}`}>All Stations</span>
+                    <span className={`font-medium text-sm flex-1 text-left ${activeFilter === 'all' ? "text-[#34C759]" : "text-gray-600"}`}>{t('map.allStations') || 'All Stations'}</span>
                     {activeFilter === 'all' && <Check size={18} className="text-[#34C759]" />}
                   </button>
                   <button onClick={() => { setFilter('open'); setFilterModalVisible(false); }} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${activeFilter === 'open' ? 'border-[#34C759] bg-[#E8F8EC]' : 'border-gray-200 bg-white'}`}>
                     <Clock size={18} className={activeFilter === 'open' ? "text-[#34C759]" : "text-gray-400"} />
-                    <span className={`font-medium text-sm flex-1 text-left ${activeFilter === 'open' ? "text-[#34C759]" : "text-gray-600"}`}>Open Now</span>
+                    <span className={`font-medium text-sm flex-1 text-left ${activeFilter === 'open' ? "text-[#34C759]" : "text-gray-600"}`}>{t('map.openNow') || 'Open Now'}</span>
                     {activeFilter === 'open' && <Check size={18} className="text-[#34C759]" />}
                   </button>
                   <button onClick={() => { setFilter('top_rated'); setFilterModalVisible(false); }} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${activeFilter === 'top_rated' ? 'border-[#34C759] bg-[#E8F8EC]' : 'border-gray-200 bg-white'}`}>
                     <Star size={18} className={activeFilter === 'top_rated' ? "text-[#34C759]" : "text-gray-400"} />
-                    <span className={`font-medium text-sm flex-1 text-left ${activeFilter === 'top_rated' ? "text-[#34C759]" : "text-gray-600"}`}>Top Rated (4.0+)</span>
+                    <span className={`font-medium text-sm flex-1 text-left ${activeFilter === 'top_rated' ? "text-[#34C759]" : "text-gray-600"}`}>{t('map.topRated') || 'Top Rated (4.0+)'}</span>
                     {activeFilter === 'top_rated' && <Check size={18} className="text-[#34C759]" />}
                   </button>
                   <button onClick={() => { setFilter('car_wash'); setFilterModalVisible(false); }} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${activeFilter === 'car_wash' ? 'border-[#34C759] bg-[#E8F8EC]' : 'border-gray-200 bg-white'}`}>
                     <Droplet size={18} className={activeFilter === 'car_wash' ? "text-[#34C759]" : "text-gray-400"} />
-                    <span className={`font-medium text-sm flex-1 text-left ${activeFilter === 'car_wash' ? "text-[#34C759]" : "text-gray-600"}`}>Has Car Wash</span>
+                    <span className={`font-medium text-sm flex-1 text-left ${activeFilter === 'car_wash' ? "text-[#34C759]" : "text-gray-600"}`}>{t('map.hasCarWash') || 'Has Car Wash'}</span>
                     {activeFilter === 'car_wash' && <Check size={18} className="text-[#34C759]" />}
                   </button>
                 </div>

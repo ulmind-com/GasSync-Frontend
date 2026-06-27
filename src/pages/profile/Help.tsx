@@ -1,28 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, HelpCircle, Mail, Globe, MapPin, Search, PlusCircle } from 'lucide-react';
+import { ArrowLeft, HelpCircle, Mail, Globe, ChevronDown } from 'lucide-react';
 
 export default function Help() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
-  const faqs = [
-    {
-      icon: <MapPin size={24} className="text-[#34C759]" />,
-      q: t('help.faq1Q'),
-      a: t('help.faq1A')
-    },
-    {
-      icon: <Search size={24} className="text-[#208AEF]" />,
-      q: t('help.faq2Q'),
-      a: t('help.faq2A')
-    },
-    {
-      icon: <PlusCircle size={24} className="text-[#FF9500]" />,
-      q: t('help.faq3Q'),
-      a: t('help.faq3A')
-    }
+  const FAQS = [
+    { q: t('help.q1'), a: t('help.a1') },
+    { q: t('help.q2'), a: t('help.a2') },
+    { q: t('help.q3'), a: t('help.a3') },
+    { q: t('help.q4'), a: t('help.a4') },
+    { q: t('help.q5'), a: t('help.a5') }
   ];
 
   const handleEmailSupport = () => {
@@ -44,7 +35,7 @@ export default function Help() {
           <button onClick={() => navigate(-1)} className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.05)] text-gray-800 hover:bg-gray-50 transition-colors">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="font-semibold text-xl text-gray-900">{t('help.title')}</h1>
+          <h1 className="font-semibold text-xl text-gray-900">{t('profile.help')}</h1>
           <div className="w-11 h-11" />
         </div>
 
@@ -55,18 +46,31 @@ export default function Help() {
           <h2 className="font-semibold text-2xl text-gray-900 mb-2">{t('help.faqTitle')}</h2>
           <p className="font-medium text-[15px] text-gray-500 mb-8 text-center">{t('help.subtitle')}</p>
 
-          <div className="w-full flex flex-col gap-4">
-            {faqs.map((faq, index) => (
-              <div key={index} className="flex items-start gap-4 p-5 bg-gray-50 rounded-2xl">
-                <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center shrink-0">
-                  {faq.icon}
+          <div className="w-full flex flex-col gap-3">
+            {FAQS.map((faq, index) => {
+              const isExpanded = expandedIndex === index;
+              return (
+                <div 
+                  key={index} 
+                  className={`bg-gray-50 rounded-2xl border transition-colors duration-200 overflow-hidden ${isExpanded ? 'border-[#34C759]' : 'border-transparent'}`}
+                >
+                  <button 
+                    onClick={() => setExpandedIndex(isExpanded ? null : index)}
+                    className="w-full flex items-center justify-between p-5 text-left"
+                  >
+                    <span className={`font-semibold text-[15px] pr-4 transition-colors duration-200 ${isExpanded ? 'text-[#34C759]' : 'text-gray-900'}`}>{faq.q}</span>
+                    <ChevronDown size={20} className={`shrink-0 transform transition-transform duration-300 ${isExpanded ? 'rotate-180 text-[#34C759]' : 'text-gray-400'}`} />
+                  </button>
+                  <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                    <div className="overflow-hidden">
+                      <div className="p-5 pt-0">
+                        <p className="font-medium text-[14px] text-gray-500 leading-relaxed">{faq.a}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-[15px] text-gray-900 mb-1">{faq.q}</h3>
-                  <p className="font-medium text-[13px] text-gray-500 leading-relaxed">{faq.a}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -98,7 +102,7 @@ export default function Help() {
               </div>
               <div className="text-left">
                 <span className="block font-semibold text-base text-gray-900">Website</span>
-                <span className="block font-medium text-xs text-gray-500">gassync.app</span>
+                <span className="block font-medium text-xs text-gray-500">https://gassync.app</span>
               </div>
             </div>
           </button>

@@ -27,3 +27,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# scaffolding junk / temp scripts (not part of the app)
+/@/
+add_save.cjs
+fix*.cjs

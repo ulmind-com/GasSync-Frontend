@@ -4,11 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Mail, Camera, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { api } from '../../lib/axios';
+import { useToast } from '../../components/Toast';
 
 export default function EditProfile() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, fetchUser } = useAuthStore();
+  const { showToast } = useToast();
   
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -27,7 +29,7 @@ export default function EditProfile() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!displayName.trim()) {
-      alert(t('editProfile.errorEmptyName'));
+      showToast(t('editProfile.errorEmptyName'), 'warning');
       return;
     }
 
@@ -49,9 +51,10 @@ export default function EditProfile() {
       }
 
       await fetchUser(); // Refresh global user state
+      showToast(t('editProfile.success'), 'success');
       navigate(-1);
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Something went wrong');
+      showToast(error.response?.data?.message || 'Something went wrong', 'error');
     } finally {
       setUploading(false);
     }

@@ -1,13 +1,16 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, Bell, TrendingDown, TrendingUp, BarChart2, Map, Users, Camera, ThumbsUp, ThumbsDown, ChevronDown, ChevronRight, Star, Navigation, User, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/axios';
 import { fetchNearbyGasStations, getPhotoUrl, calculateDistanceMiles } from '../lib/overpass';
 import type { GasStationPlace } from '../lib/overpass';
 import { useLocationStore } from '../store/locationStore';
 import { useAuthStore } from '../store/authStore';
+import { applyVoteOptimistic, rollbackVote, invalidateVoteQueries } from '../lib/voteCache';
+import type { VoteType } from '../lib/voteCache';
+import { useToast } from '../components/Toast';
 
 // ─── Types ────────────────────────────────────────────────
 interface StationWithPrices {
@@ -28,6 +31,7 @@ const FUEL_COLOR: Record<string, string> = {
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'market' | 'community'>('market');
 
@@ -171,57 +175,36 @@ export default function Home() {
     return `${day}${getSuffix(day)} ${month} ${year}`;
   };
 
+  const { showToast } = useToast();
+
   const voteMutation = useMutation({
-    mutationFn: async ({ id, type }: { id: string; type: 'helpful' | 'not-helpful' }) => {
+    mutationFn: async ({ id, type }: { id: string; type: VoteType }) => {
       const res = await api.post(`/bills/${id}/${type}`);
       return res.data;
     },
     onMutate: async ({ id, type }) => {
-      await queryClient.cancelQueries({ queryKey: ['home-station-prices'] });
-      
-      queryClient.setQueriesData({ queryKey: ['home-station-prices'] }, (oldData: any) => {
-        if (!oldData) return oldData;
-        return oldData.map((station: any) => ({
-          ...station,
-          communityPrices: station.communityPrices.map((cp: any) => {
-            if (cp.id === id) {
-              const newCp = { ...cp };
-              const userId = user?.id || user?._id;
-              
-              if (type === 'helpful') {
-                const isHelpful = newCp.helpfulUsers?.includes(userId);
-                if (isHelpful) {
-                  newCp.helpfulUsers = newCp.helpfulUsers.filter((u: any) => u !== userId);
-                  newCp.helpfulCount = Math.max(0, (newCp.helpfulCount || 0) - 1);
-                } else {
-                  newCp.helpfulUsers = [...(newCp.helpfulUsers || []), userId];
-                  newCp.helpfulCount = (newCp.helpfulCount || 0) + 1;
-                  newCp.notHelpfulUsers = (newCp.notHelpfulUsers || []).filter((u: any) => u !== userId);
-                  newCp.notHelpfulCount = newCp.notHelpfulUsers.length;
-                }
-              } else {
-                const isNotHelpful = newCp.notHelpfulUsers?.includes(userId);
-                if (isNotHelpful) {
-                  newCp.notHelpfulUsers = newCp.notHelpfulUsers.filter((u: any) => u !== userId);
-                  newCp.notHelpfulCount = Math.max(0, (newCp.notHelpfulCount || 0) - 1);
-                } else {
-                  newCp.notHelpfulUsers = [...(newCp.notHelpfulUsers || []), userId];
-                  newCp.notHelpfulCount = (newCp.notHelpfulCount || 0) + 1;
-                  newCp.helpfulUsers = (newCp.helpfulUsers || []).filter((u: any) => u !== userId);
-                  newCp.helpfulCount = newCp.helpfulUsers.length;
-                }
-              }
-              return newCp;
-            }
-            return cp;
-          })
-        }));
-      });
+      const userId = user?.id || user?._id;
+      if (!userId) return { snapshots: undefined };
+      const snapshots = await applyVoteOptimistic(queryClient, id, type, userId);
+      return { snapshots };
+    },
+    onError: (_err: any, _vars: any, context: any) => {
+      rollbackVote(queryClient, context?.snapshots);
+      showToast('Failed to register your vote. Please try again.', 'error');
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['home-station-prices'] });
-    }
+      invalidateVoteQueries(queryClient);
+    },
   });
+
+  const handleVote = (id: string, type: 'helpful' | 'not-helpful') => {
+    if (!user) {
+      showToast('Please log in to vote on community reports', 'warning');
+      navigate('/login?returnTo=' + encodeURIComponent(location.pathname + location.search));
+      return;
+    }
+    voteMutation.mutate({ id, type });
+  };
 
   const { data: unreadData } = useQuery({
     queryKey: ['unread-count'],
@@ -258,7 +241,7 @@ export default function Home() {
 
         {/* ─── Price Stats Card ─── */}
         <div className="mb-8">
-          <h2 className="font-bold text-xl text-gray-900 mb-4">Market Overview</h2>
+          <h2 className="font-bold text-xl text-gray-900 mb-4">{t('home.marketOverview') || 'Market Overview'}</h2>
           {isLoading ? (
             <div className="bg-white rounded-2xl p-8 shadow-sm flex flex-col items-center justify-center min-h-[150px] border border-gray-100">
               <div className="w-8 h-8 border-4 border-[#34C759] border-t-transparent rounded-full animate-spin" />
@@ -477,26 +460,26 @@ export default function Home() {
                       </div>
                       <div className="flex items-center gap-4">
                         <button 
-                          className="flex items-center gap-1.5 transition-transform hover:scale-110" 
+                          className={`flex items-center gap-1.5 transition-all duration-200 hover:scale-110 active:scale-95 rounded-lg px-2 py-1 -mx-2 -my-1 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#34C759]/10' : 'hover:bg-gray-100'}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (!user) return alert(t('common.loginRequired'));
-                            voteMutation.mutate({ id: cp.id, type: 'helpful' });
+                            if (!user) return showToast(t('common.loginRequired') || 'Please log in again to continue.', 'error');
+                            handleVote(cp.id, 'helpful');
                           }}
                         >
-                          <ThumbsUp size={16} className={cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759]' : 'text-gray-400'} />
-                          <span className={`text-sm font-semibold ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759]' : 'text-gray-500'}`}>{cp.helpfulCount || 0}</span>
+                          <ThumbsUp size={16} className={`transition-colors duration-200 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759] fill-[#34C759]/20' : 'text-gray-400'}`} />
+                          <span className={`text-sm font-semibold transition-colors duration-200 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759]' : 'text-gray-500'}`}>{cp.helpfulCount || 0}</span>
                         </button>
                         <button 
-                          className="flex items-center gap-1.5 transition-transform hover:scale-110" 
+                          className={`flex items-center gap-1.5 transition-all duration-200 hover:scale-110 active:scale-95 rounded-lg px-2 py-1 -mx-2 -my-1 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#FF3B30]/10' : 'hover:bg-gray-100'}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (!user) return alert(t('common.loginRequired'));
-                            voteMutation.mutate({ id: cp.id, type: 'not-helpful' });
+                            if (!user) return showToast(t('common.loginRequired') || 'Please log in again to continue.', 'error');
+                            handleVote(cp.id, 'not-helpful');
                           }}
                         >
-                          <ThumbsDown size={16} className={cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30]' : 'text-gray-400'} />
-                          <span className={`text-sm font-semibold ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30]' : 'text-gray-500'}`}>{cp.notHelpfulCount || 0}</span>
+                          <ThumbsDown size={16} className={`transition-colors duration-200 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30] fill-[#FF3B30]/20' : 'text-gray-400'}`} />
+                          <span className={`text-sm font-semibold transition-colors duration-200 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30]' : 'text-gray-500'}`}>{cp.notHelpfulCount || 0}</span>
                         </button>
                       </div>
                     </div>

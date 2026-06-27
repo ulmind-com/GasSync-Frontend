@@ -15,6 +15,7 @@ import StationDetails from './pages/StationDetails';
 import StationAll from './pages/StationAll';
 import Notifications from './pages/Notifications';
 import LocationSearch from './pages/LocationSearch';
+import Scanner from './pages/Scanner';
 
 import EditProfile from './pages/profile/EditProfile';
 import History from './pages/profile/History';
@@ -25,7 +26,6 @@ import HowToUse from './pages/profile/HowToUse';
 import Help from './pages/profile/Help';
 
 // Placeholder Pages
-const Scanner = () => <div className="p-4 pt-12 pb-24 h-screen bg-[#F8FAFC]">Scanner Page</div>;
 const ForgotPassword = () => <div className="p-4 h-screen bg-[#F8FAFC]">Forgot Password Page</div>;
 
 function App() {
@@ -39,7 +39,7 @@ function App() {
     <BrowserRouter>
       <div className="w-full h-full min-h-screen bg-[#F8FAFC] text-[#1A1A1A] font-poppins relative overflow-x-hidden flex flex-col">
         <Navbar />
-        <main className="flex-1 w-full max-w-7xl mx-auto px-0 sm:px-4 lg:px-8 pb-10">
+        <main className="flex-1 w-full max-w-7xl mx-auto px-0 sm:px-4 lg:px-8 pb-10 pt-24">
           <Routes>
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
