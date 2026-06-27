@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 
-export const API_URL = '/api/v1';
+// Backend base URL. Set VITE_API_URL (e.g. on Vercel) to call the backend
+// directly; otherwise fall back to the relative path served by the Vite dev
+// proxy / the vercel.json rewrite.
+export const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 // In-memory token cache for faster access and as fallback
 let cachedToken: string | null = null;
