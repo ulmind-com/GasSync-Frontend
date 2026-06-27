@@ -1,39 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, User, MapPin, FileText, Lock, Globe, Bell, Moon, MessageCircle, Share2, Info, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, Edit2, User, MapPin, FileText, Lock, Globe, Moon, MessageCircle, Share2, Info, HelpCircle, LogOut, ChevronRight, Trash2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { api } from '../lib/axios';
+import { useToast } from '../components/Toast';
 
 export default function Profile() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
   
-  const { user, token, logout, fetchUser } = useAuthStore();
+  const { user, token, isLoading, logout, fetchUser } = useAuthStore();
   const { isDark, toggleTheme } = useThemeStore();
-  
-  const [notificationEnabled, setNotificationEnabled] = useState(user?.pushNotificationsEnabled ?? true);
-
-  useEffect(() => {
-    if (user && user.pushNotificationsEnabled !== undefined) {
-      setNotificationEnabled(user.pushNotificationsEnabled);
-    }
-  }, [user]);
-
-  const handleToggleNotification = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.checked;
-    setNotificationEnabled(value);
-    if (!token || !user) return;
-    try {
-      await api.put('/auth/me', { pushNotificationsEnabled: value });
-      await fetchUser();
-    } catch (error) {
-      setNotificationEnabled(!value);
-      console.error('Failed to update notification preference', error);
-    }
-  };
-
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -47,14 +30,36 @@ export default function Profile() {
       }
     } else {
       // Fallback
-      alert('Share: https://gassync.app');
+      showToast('Share: https://gassync.app', 'info');
     }
   };
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/home', { replace: true });
   };
+
+  const confirmDeleteAccount = () => {
+    api.delete('/auth/account')
+      .then(() => {
+        queryClient.clear();
+        logout();
+        navigate('/home');
+        showToast(t('common.deleted') || 'Account deleted successfully', 'success');
+        setShowDeleteModal(false);
+      })
+      .catch((e: any) => {
+        showToast(e.response?.data?.message || t('common.deleteFailed') || 'Failed to delete account. Please try again.', 'error');
+        setShowDeleteModal(false);
+      });
+  };
+
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(true);
+  };
+
 
   return (
     <div className="flex flex-col flex-1 bg-[#F8FAFC] relative overflow-hidden">
@@ -71,7 +76,11 @@ export default function Profile() {
           <div className="w-11 h-11" /> {/* Spacer */}
         </div>
 
-        {token && user ? (
+        {isLoading ? (
+          <div className="flex justify-center py-24">
+            <div className="w-9 h-9 border-4 border-[#34C759] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : token && user ? (
           <div className="bg-white rounded-3xl p-5 mb-8 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.03)]">
             <div className="flex items-center flex-1 pr-4">
               <div className="w-[60px] h-[60px] rounded-full bg-[#E8F8EC] flex items-center justify-center overflow-hidden shrink-0">
@@ -100,7 +109,7 @@ export default function Profile() {
             <h2 className="font-semibold text-2xl text-gray-900 mb-2">{t('profile.guestTitle')}</h2>
             <p className="font-normal text-[15px] text-gray-500 mb-8 text-center">{t('profile.guestSubtitle')}</p>
             <button 
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/login?returnTo=' + encodeURIComponent(location.pathname + location.search))}
               className="w-full h-14 bg-[#34C759] rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-md hover:bg-[#2EB350] transition-colors"
             >
               {t('profile.signIn')}
@@ -126,18 +135,6 @@ export default function Profile() {
             <div className="h-px bg-gray-100 w-full" />
             <MenuItem icon={<Globe size={20} className="text-gray-500" />} label={t('profile.language')} onClick={() => navigate('/profile/language')} />
             
-            <div className="h-px bg-gray-100 w-full" />
-            <div className="flex items-center justify-between py-4">
-              <div className="flex items-center gap-4">
-                <Bell size={20} className="text-gray-500" />
-                <span className="font-medium text-base text-gray-900">{t('profile.notification')}</span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" value="" className="sr-only peer" checked={notificationEnabled} onChange={handleToggleNotification} />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#34C759]"></div>
-              </label>
-            </div>
-
             <div className="h-px bg-gray-100 w-full" />
             <div className="flex items-center justify-between py-4">
               <div className="flex items-center gap-4">
@@ -170,10 +167,21 @@ export default function Profile() {
         {token && user && (
           <button 
             onClick={handleLogout}
-            className="w-full bg-white rounded-3xl py-4 px-5 flex items-center shadow-[0_4px_12px_rgba(0,0,0,0.03)] hover:bg-red-50 transition-colors"
+            className="w-full bg-white rounded-3xl py-4 px-5 flex items-center shadow-[0_4px_12px_rgba(0,0,0,0.03)] hover:bg-red-50 transition-colors mb-3"
           >
             <LogOut size={20} className="text-[#FF3B30]" />
             <span className="font-semibold text-base text-[#FF3B30] ml-4">{t('profile.logOut')}</span>
+          </button>
+        )}
+
+        {/* Delete account */}
+        {token && user && (
+          <button 
+            onClick={handleDeleteAccount}
+            className="w-full bg-white rounded-3xl py-4 px-5 flex items-center shadow-[0_4px_12px_rgba(0,0,0,0.03)] hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={20} className="text-[#FF3B30]" />
+            <span className="font-semibold text-base text-[#FF3B30] ml-4">{t('profile.deleteAccount')}</span>
           </button>
         )}
 
@@ -188,6 +196,33 @@ export default function Profile() {
           <img src="/ulmind.png" alt="Ulmind" className="h-6 object-contain opacity-85 group-hover:opacity-100 transition-opacity" />
         </a>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={() => setShowDeleteModal(false)} />
+          <div className="bg-white rounded-[28px] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-[22px] font-semibold text-gray-900 mb-2">{t('profile.deleteAccountTitle') || 'Delete Account?'}</h3>
+            <p className="text-[15px] text-gray-500 mb-8 leading-relaxed">
+              {t('profile.deleteAccountMsg') || 'This permanently deletes your account and all your data. This cannot be undone.'}
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3.5 px-4 bg-[#F2F2F7] active:bg-[#E5E5EA] text-[#007AFF] font-semibold text-[17px] rounded-2xl transition-colors"
+              >
+                {t('common.cancel') || 'Cancel'}
+              </button>
+              <button 
+                onClick={confirmDeleteAccount}
+                className="flex-1 py-3.5 px-4 bg-[#FF3B30] active:bg-[#D92F26] text-white font-semibold text-[17px] rounded-2xl transition-colors shadow-sm"
+              >
+                {t('profile.deleteAccountConfirm') || 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
