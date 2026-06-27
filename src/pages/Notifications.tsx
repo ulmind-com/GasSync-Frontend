@@ -99,9 +99,9 @@ export default function Notifications() {
           <div className="w-20 h-20 bg-[#E8F8EC] rounded-full flex items-center justify-center mb-5">
             <Lock size={40} className="text-[#34C759]" />
           </div>
-          <h2 className="font-bold text-xl text-gray-900 mb-2">{t('common.loginToContinue')}</h2>
+          <h2 className="font-bold text-xl text-gray-900 mb-2">{t('notifications.loginTitle')}</h2>
           <p className="font-normal text-sm text-gray-500 text-center leading-relaxed mb-6">
-            Log in to receive notifications about price drops, helpful votes, and more.
+            {t('notifications.loginSub')}
           </p>
           <button 
             onClick={() => navigate('/login')}

@@ -8,8 +8,8 @@ import App from './App.tsx'
 
 const queryClient = new QueryClient()
 
-// Try to use Vite env vars, fallback to Expo ones if available in process.env somehow, or dummy
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || '1013757659551-q0f9j6e864c0tq5e258r51ovd60h7nsh.apps.googleusercontent.com'
+// Must match the Web OAuth client used by the backend (same Google project).
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || '143816392628-6cb8kiu12bmd20241kc1tsuhkjasslab.apps.googleusercontent.com'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

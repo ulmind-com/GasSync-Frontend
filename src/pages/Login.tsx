@@ -22,6 +22,7 @@ export default function Login() {
   const returnTo = searchParams.get('returnTo');
 
   const handleGoogleLogin = useGoogleLogin({
+    scope: 'openid email profile',
     onSuccess: async (tokenResponse) => {
       setLoading(true);
       setError('');

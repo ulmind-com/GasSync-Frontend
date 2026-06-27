@@ -175,6 +175,8 @@ const resources = {
         unreadPlural: 'unread notifications',
         noNotificationsYet: 'No Notifications Yet',
         noNotificationsSub: "When someone finds your report helpful, or prices drop at your favorites, you'll see it here.",
+        loginTitle: 'Sign In Required',
+        loginSub: 'Log in to get notified about price drops, helpful votes, and more.',
       },
       auth: {
         signInTitle: 'Welcome Back',
@@ -274,7 +276,7 @@ const resources = {
         errorMsg: 'মতামত জমা দিতে ব্যর্থ হয়েছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।'
       },
       locationSearch: { searchPlaceholder: 'শহর খুঁজুন...', setLiveLocation: 'বর্তমান অবস্থান সেট করুন', unknownLocation: 'অজানা অবস্থান', locationError: 'অবস্থান ত্রুটি' },
-      notifications: { title: 'নোটিফিকেশন', unreadSingular: 'টি না পড়া নোটিফিকেশন', unreadPlural: 'টি না পড়া নোটিফিকেশন', noNotificationsYet: 'এখনও কোনো নোটিফিকেশন নেই', noNotificationsSub: 'যখন কেউ আপনার রিপোর্ট সহায়ক মনে করবে, বা দাম কমবে, আপনি এখানে দেখতে পাবেন।' },
+      notifications: { title: 'নোটিফিকেশন', unreadSingular: 'টি না পড়া নোটিফিকেশন', unreadPlural: 'টি না পড়া নোটিফিকেশন', noNotificationsYet: 'এখনও কোনো নোটিফিকেশন নেই', noNotificationsSub: 'যখন কেউ আপনার রিপোর্ট সহায়ক মনে করবে, বা দাম কমবে, আপনি এখানে দেখতে পাবেন।', loginTitle: 'সাইন ইন প্রয়োজন', loginSub: 'দাম কমা, সহায়ক ভোট এবং আরও অনেক কিছুর নোটিফিকেশন পেতে লগ ইন করুন।' },
       profile: {
         title: 'প্রোফাইল',
         general: 'সাধারণ',
@@ -484,7 +486,7 @@ const resources = {
         errorMsg: 'Error al enviar los comentarios. Inténtalo de nuevo más tarde.'
       },
       locationSearch: { searchPlaceholder: 'Buscar una ciudad...', setLiveLocation: 'Establecer ubicación actual', unknownLocation: 'Ubicación desconocida', locationError: 'Error de ubicación' },
-      notifications: { title: 'Notificaciones', unreadSingular: 'notificación no leída', unreadPlural: 'notificaciones no leídas', noNotificationsYet: 'Aún No Hay Notificaciones', noNotificationsSub: 'Cuando alguien encuentre útil tu informe o los precios bajen, lo verás aquí.' },
+      notifications: { title: 'Notificaciones', unreadSingular: 'notificación no leída', unreadPlural: 'notificaciones no leídas', noNotificationsYet: 'Aún No Hay Notificaciones', noNotificationsSub: 'Cuando alguien encuentre útil tu informe o los precios bajen, lo verás aquí.', loginTitle: 'Inicia sesión', loginSub: 'Inicia sesión para recibir avisos de bajadas de precio, votos útiles y más.' },
       profile: {
         title: 'Perfil',
         general: 'General',
@@ -694,7 +696,7 @@ const resources = {
         errorMsg: 'Échec de la soumission du retour.'
       },
       locationSearch: { searchPlaceholder: 'Rechercher une ville...', setLiveLocation: 'Définir la position actuelle', unknownLocation: 'Position inconnue', locationError: 'Erreur de position' },
-      notifications: { title: 'Notifications', unreadSingular: 'notification non lue', unreadPlural: 'notifications non lues', noNotificationsYet: 'Aucune Notification', noNotificationsSub: "Quand quelqu'un trouve votre rapport utile ou que les prix baissent, vous le verrez ici." },
+      notifications: { title: 'Notifications', unreadSingular: 'notification non lue', unreadPlural: 'notifications non lues', noNotificationsYet: 'Aucune Notification', noNotificationsSub: "Quand quelqu'un trouve votre rapport utile ou que les prix baissent, vous le verrez ici.", loginTitle: 'Connexion requise', loginSub: 'Connectez-vous pour être informé des baisses de prix, des votes utiles et plus encore.' },
       profile: {
         title: 'Profil',
         general: 'Général',
