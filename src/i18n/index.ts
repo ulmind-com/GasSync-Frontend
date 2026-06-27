@@ -9,6 +9,7 @@ const resources = {
   ...extraLanguages,
   en: {
     translation: {
+      navbar: { home: 'Home', map: 'Map', favorites: 'Favorites' },
         howToUse: {
           "title": "How to Use GasSync",
           "subtitle": "Follow these simple steps to start contributing to the community and find the best gas prices.",
@@ -22,8 +23,10 @@ const resources = {
           "step4Desc": "Your uploaded bill helps other drivers get real-time, accurate prices before they reach the pump."
         },
       help: {
-          "pageTitle": "Frequently Asked Questions",
-          "pageSubtitle": "Find answers to the most common questions about GasSync.",
+          "title": "Help & Support",
+          "faqTitle": "Frequently Asked Questions",
+          "subtitle": "Find answers to the most common questions about GasSync.",
+          "contactUs": "Contact Us",
           "q1": "What exactly is GasSync?",
           "a1": "GasSync is a community-driven app that helps you find the cheapest gas prices nearby. We use real-time receipt uploads from users like you, combined with daily market data to show you the best prices.",
           "q2": "How does the receipt scanner work?",
@@ -33,7 +36,13 @@ const resources = {
           "q4": "Why should I upload my receipt?",
           "a4": "By scanning and uploading your receipt, you directly help other drivers in your community avoid overpriced gas. It is a simple way to contribute and keep prices transparent for everyone!",
           "q5": "Is GasSync free to use?",
-          "a5": "Yes! GasSync is completely free for all users."
+          "a5": "Yes! GasSync is completely free for all users.",
+          "faq1Q": "What exactly is GasSync?",
+          "faq1A": "GasSync is a community-driven app that helps you find the cheapest gas prices nearby. We use real-time receipt uploads from users like you, combined with daily market data to show you the best prices.",
+          "faq2Q": "How does the receipt scanner work?",
+          "faq2A": "Just take a photo of your gas bill using the center '+' button! Our AI (Groq Vision) automatically reads the receipt and extracts the price per gallon and fuel type. Verify the numbers, hit submit, and it goes live instantly!",
+          "faq3Q": "Are the gas prices real-time?",
+          "faq3A": "Yes! While general market prices update every 24 hours, Community uploads (user receipts) appear instantly and are 100% real-time."
         },
       feedback: {
         pageSubtitle: "We'd love to hear from you! Let us know how we can improve GasSync.",
@@ -77,8 +86,13 @@ const resources = {
         myUploads: 'My Uploads',
         darkMode: 'Dark Mode',
         changePassword: 'Change Password',
+        deleteAccount: 'Delete Account',
+        deleteAccountTitle: 'Delete Account?',
+        deleteAccountMsg: 'This permanently deletes your account and all your data. This cannot be undone.',
+        deleteAccountConfirm: 'Delete',
       },
       home: {
+        marketOverview: 'Market Overview',
         noPriceData: 'No price data nearby',
         greeting: 'Welcome back,',
         nationalAvg: 'National Average',
@@ -104,6 +118,14 @@ const resources = {
         exploreMap: 'Explore Map',
       },
       map: {
+        filterStations: 'Filter Stations',
+        searchRadius: 'Search Radius',
+        miles: 'miles',
+        stationFeatures: 'Station Features',
+        allStations: 'All Stations',
+        openNow: 'Open Now',
+        topRated: 'Top Rated (4.0+)',
+        hasCarWash: 'Has Car Wash',
         title: 'Gas Stations',
         searchPlaceholder: 'Search nearby stations...',
         searchBtn: 'Search',
@@ -125,9 +147,10 @@ const resources = {
         deleted: 'Deleted',
         sessionExpired: 'Session Expired',
         loginToContinue: 'Please log in again to continue.',
-        cancel: 'Cancel',
+        cancel: 'Cancel', save: 'Save',
         deleteFailed: 'Delete Failed',
         errorOccurred: 'An error occurred',
+        getStarted: 'Get Started',
       },
       scanner: {
         title: 'Scanner',
@@ -140,6 +163,11 @@ const resources = {
         historyDesc: 'Your previously scanned bills',
       },
       station: {
+        updatePrice: 'Update Price',
+        pricesAndReports: 'Prices & Reports',
+        justNow: 'Just now',
+        navigate: 'Navigate',
+        noPriceData: 'No price data available',
         communityReports: 'Community Reports',
         noReports: 'No community reports yet',
         beFirst: 'Be the first to report',
@@ -168,6 +196,9 @@ const resources = {
         tapToViewStation: 'Tap to view station',
         recently: 'Recently',
         billDeleted: 'Bill has been deleted successfully.',
+        noUploads: 'No uploads yet',
+        noUploadsSub: 'Scan a gas receipt to track your spending and share prices with the community.',
+        scanFirst: 'Scan your first bill',
       },
       notifications: {
         title: 'Notifications',
@@ -227,6 +258,7 @@ const resources = {
   },
   bn: {
     translation: {
+      navbar: { home: 'হোম', map: 'ম্যাপ', favorites: 'পছন্দসমূহ' },
         howToUse: {
           title: 'GasSync কিভাবে ব্যবহার করবেন',
           subtitle: 'এই সহজ ধাপগুলি অনুসরণ করে কমিউনিটিতে অবদান রাখুন এবং সেরা গ্যাসের দাম খুঁজে নিন।',
@@ -240,8 +272,10 @@ const resources = {
           step4Desc: 'আপনার আপলোড করা বিল অন্যান্য ড্রাইভারদের পাম্পে পৌঁছানোর আগেই রিয়েল-টাইম, সঠিক দাম জানতে সাহায্য করবে।',
         },
         help: {
-          pageTitle: 'সচরাচর জিজ্ঞাসিত প্রশ্ন (FAQ)',
-          pageSubtitle: 'GasSync সম্পর্কে সবচেয়ে সাধারণ প্রশ্নের উত্তর এখানে পাবেন।',
+          title: 'সাহায্য ও সাপোর্ট',
+          faqTitle: 'সচরাচর জিজ্ঞাসিত প্রশ্ন (FAQ)',
+          subtitle: 'GasSync সম্পর্কে সবচেয়ে সাধারণ প্রশ্নের উত্তর এখানে পাবেন।',
+          contactUs: 'আমাদের সাথে যোগাযোগ করুন',
           q1: 'GasSync আসলে কি?',
           a1: 'GasSync একটি কমিউনিটি-চালিত অ্যাপ যা আপনাকে আশেপাশের সবচেয়ে সস্তা গ্যাসের দাম খুঁজে পেতে সাহায্য করে। আমরা আপনার মতো ব্যবহারকারীদের রিয়েল-টাইম রসিদ এবং দৈনিক মার্কেট ডেটা ব্যবহার করি।',
           q2: 'রসিদ স্ক্যানার কিভাবে কাজ করে?',
@@ -252,6 +286,12 @@ const resources = {
           a4: 'আপনার রসিদ স্ক্যান এবং আপলোড করলে আপনি সরাসরি অন্যান্য ড্রাইভারদের অতিরিক্ত দামের গ্যাস এড়াতে সাহায্য করেন। এটি কমিউনিটিতে অবদান রাখার এবং দাম স্বচ্ছ রাখার একটি সহজ উপায়!',
           q5: 'GasSync কি বিনামূল্যে?',
           a5: 'হ্যাঁ! GasSync সব ব্যবহারকারীর জন্য সম্পূর্ণ বিনামূল্যে।',
+          faq1Q: 'GasSync আসলে কি?',
+          faq1A: 'GasSync একটি কমিউনিটি-চালিত অ্যাপ যা আপনাকে আশেপাশের সবচেয়ে সস্তা গ্যাসের দাম খুঁজে পেতে সাহায্য করে। আমরা আপনার মতো ব্যবহারকারীদের রিয়েল-টাইম রসিদ এবং দৈনিক মার্কেট ডেটা ব্যবহার করি।',
+          faq2Q: 'রসিদ স্ক্যানার কিভাবে কাজ করে?',
+          faq2A: 'মাঝখানের "+" বোতাম দিয়ে আপনার গ্যাস বিলের ছবি তুলুন! আমাদের AI (Groq Vision) স্বয়ংক্রিয়ভাবে রসিদ পড়ে প্রতি গ্যালন দাম এবং জ্বালানির ধরন বের করে। নম্বর যাচাই করে সাবমিট করুন, সাথে সাথেই লাইভ হয়ে যাবে!',
+          faq3Q: 'গ্যাসের দাম কি রিয়েল-টাইম?',
+          faq3A: 'হ্যাঁ! সাধারণ মার্কেটের দাম প্রতি ২৪ ঘণ্টায় আপডেট হয় (অ্যাপ দ্রুত রাখতে), কিন্তু কমিউনিটি আপলোড (ব্যবহারকারীদের রসিদ) তৎক্ষণাৎ দেখা যায় এবং ১০০% রিয়েল-টাইম।'
         },
       feedback: {
         pageSubtitle: 'আমরা আপনার মতামত জানতে চাই! আমাদের জানান কীভাবে আমরা GasSync কে উন্নত করতে পারি।',
@@ -296,8 +336,13 @@ const resources = {
         myUploads: 'আমার আপলোডগুলি',
         darkMode: 'ডার্ক মোড',
         changePassword: 'পাসওয়ার্ড পরিবর্তন করুন',
+        deleteAccount: 'অ্যাকাউন্ট মুছুন',
+        deleteAccountTitle: 'অ্যাকাউন্ট মুছবেন?',
+        deleteAccountMsg: 'আপনি কি নিশ্চিত যে আপনি আপনার অ্যাকাউন্ট মুছে ফেলতে চান? এটি আর ফেরানো যাবে না।',
+        deleteAccountConfirm: 'মুছে ফেলুন',
       },
       home: {
+        marketOverview: 'মার্কেট ওভারভিউ',
         noPriceData: 'আশেপাশে কোনো দামের তথ্য নেই',
         greeting: 'স্বাগতম,',
         nationalAvg: 'জাতীয় গড়',
@@ -323,6 +368,14 @@ const resources = {
         exploreMap: 'ম্যাপ এক্সপ্লোর করুন',
       },
       map: {
+        filterStations: 'স্টেশন ফিল্টার করুন',
+        searchRadius: 'সার্চ ব্যাসার্ধ',
+        miles: 'মাইল',
+        stationFeatures: 'স্টেশনের বৈশিষ্ট্য',
+        allStations: 'সব স্টেশন',
+        openNow: 'এখন খোলা',
+        topRated: 'শীর্ষ রেট (৪.০+)',
+        hasCarWash: 'কার ওয়াশ আছে',
         title: 'গ্যাস স্টেশন',
         searchPlaceholder: 'কাছাকাছি স্টেশন খুঁজুন...',
         searchBtn: 'খুঁজুন',
@@ -344,9 +397,10 @@ const resources = {
         deleted: 'মুছে ফেলা হয়েছে',
         sessionExpired: 'সেশন শেষ হয়েছে',
         loginToContinue: 'চালিয়ে যেতে আবার লগ ইন করুন।',
-        cancel: 'বাতিল',
+        cancel: 'বাতিল', save: 'সংরক্ষণ করুন',
         deleteFailed: 'মুছতে ব্যর্থ হয়েছে',
         errorOccurred: 'একটি ত্রুটি ঘটেছে',
+        getStarted: 'শুরু করুন',
       },
       scanner: {
         title: 'স্ক্যানার',
@@ -359,6 +413,11 @@ const resources = {
         historyDesc: 'আপনার পূর্বে স্ক্যান করা বিলগুলি',
       },
       station: {
+        updatePrice: 'দাম আপডেট করুন',
+        pricesAndReports: 'দাম এবং রিপোর্ট',
+        justNow: 'এইমাত্র',
+        navigate: 'নেভিগেট করুন',
+        noPriceData: 'কোনো দামের ডেটা নেই',
         communityReports: 'কমিউনিটি রিপোর্ট',
         noReports: 'এখনও কোনো কমিউনিটি রিপোর্ট নেই',
         beFirst: 'প্রথম রিপোর্টকারী হোন',
@@ -437,6 +496,7 @@ const resources = {
   },
   es: {
     translation: {
+      navbar: { home: 'Inicio', map: 'Mapa', favorites: 'Favoritos' },
       howToUse: {
         title: 'Cómo usar GasSync',
         subtitle: 'Sigue estos sencillos pasos para contribuir a la comunidad.',
@@ -499,6 +559,10 @@ const resources = {
         share: 'Compartir',
         help: 'Ayuda',
         logOut: 'Cerrar sesión',
+        deleteAccount: 'Eliminar Cuenta',
+        deleteAccountTitle: '¿Eliminar cuenta?',
+        deleteAccountMsg: 'Esto elimina permanentemente tu cuenta y todos tus datos. Esto no se puede deshacer.',
+        deleteAccountConfirm: 'Eliminar',
         guestTitle: 'Usuario Invitado',
         guestSubtitle: 'Inicia sesión para sincronizar tus favoritos y preferencias',
         signIn: 'Iniciar Sesión',
@@ -554,7 +618,7 @@ const resources = {
         deleted: 'Eliminado',
         sessionExpired: 'Sesión expirada',
         loginToContinue: 'Por favor, inicie sesión de nuevo para continuar.',
-        cancel: 'Cancelar',
+        cancel: 'Cancelar', save: 'Guardar',
         deleteFailed: 'Fallo al eliminar',
         errorOccurred: 'Ocurrió un error',
       },
@@ -647,6 +711,7 @@ const resources = {
   },
   fr: {
     translation: {
+      navbar: { home: 'Accueil', map: 'Carte', favorites: 'Favoris' },
         howToUse: {
           "title": "Comment utiliser GasSync",
           "subtitle": "Suivez ces étapes simples pour aider la communauté.",
@@ -709,6 +774,10 @@ const resources = {
         share: 'Partager',
         help: 'Aide',
         logOut: 'Déconnexion',
+        deleteAccount: 'Supprimer le compte',
+        deleteAccountTitle: 'Supprimer le compte ?',
+        deleteAccountMsg: 'Cela supprime définitivement votre compte et toutes vos données. Cette action est irréversible.',
+        deleteAccountConfirm: 'Supprimer',
         guestTitle: 'Invité',
         guestSubtitle: 'Connectez-vous pour synchroniser vos favoris et préférences',
         signIn: 'Se connecter',
@@ -764,7 +833,7 @@ const resources = {
         deleted: 'Supprimé',
         sessionExpired: 'Session expirée',
         loginToContinue: 'Veuillez vous reconnecter pour continuer.',
-        cancel: 'Annuler',
+        cancel: 'Annuler', save: 'Enregistrer',
         deleteFailed: 'Échec de la suppression',
         errorOccurred: 'Une erreur s\'est produite',
       },
