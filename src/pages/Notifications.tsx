@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle, BellOff, Lock, ThumbsUp, TrendingDown, Clock, MapPin, Bell, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/axios';
@@ -36,14 +36,36 @@ export default function Notifications() {
   const { token } = useAuthStore();
   const { t } = useTranslation();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['notifications'],
-    queryFn: async () => {
-      const res = await api.get('/notifications?limit=50');
+    queryFn: async ({ pageParam }) => {
+      const res = await api.get(`/notifications?page=${pageParam}&limit=10`);
       return res.data?.data;
     },
     enabled: !!token,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const p = lastPage?.pagination;
+      return p && p.page < p.totalPages ? p.page + 1 : undefined;
+    },
   });
+
+  // Auto-load the next page when the sentinel scrolls into view
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const markAllReadMutation = useMutation({
     mutationFn: () => api.put('/notifications/mark-read'),
@@ -69,8 +91,8 @@ export default function Notifications() {
     },
   });
 
-  const notifications = data?.notifications || [];
-  const unreadCount = data?.unreadCount || 0;
+  const notifications = data?.pages.flatMap((pg: any) => pg?.notifications || []) || [];
+  const unreadCount = data?.pages[0]?.unreadCount || 0;
 
   const handleNotificationTap = (notif: any) => {
     if (!notif.isRead) {
@@ -212,6 +234,14 @@ export default function Notifications() {
                 </button>
               );
             })}
+
+            {/* Infinite-scroll sentinel + loader */}
+            <div ref={loadMoreRef} className="h-1" />
+            {isFetchingNextPage && (
+              <div className="flex justify-center py-4">
+                <div className="w-6 h-6 border-4 border-[#34C759] border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
           </div>
         )}
       </div>
