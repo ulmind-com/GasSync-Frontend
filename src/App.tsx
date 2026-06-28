@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import { CursorGlowWithVisibility } from './components/CursorEffects';
 import { useAuthStore } from './store/authStore';
 
 import Home from './pages/Home';
@@ -16,6 +17,7 @@ import StationAll from './pages/StationAll';
 import Notifications from './pages/Notifications';
 import LocationSearch from './pages/LocationSearch';
 import Scanner from './pages/Scanner';
+import NavigateRoute from './pages/NavigateRoute';
 
 import EditProfile from './pages/profile/EditProfile';
 import History from './pages/profile/History';
@@ -26,7 +28,7 @@ import HowToUse from './pages/profile/HowToUse';
 import Help from './pages/profile/Help';
 
 // Placeholder Pages
-const ForgotPassword = () => <div className="p-4 h-screen bg-[#F8FAFC]">Forgot Password Page</div>;
+const ForgotPassword = () => <div className="p-4 h-screen bg-background text-textPrimary">Forgot Password Page</div>;
 
 function App() {
   const fetchUser = useAuthStore((state) => state.fetchUser);
@@ -37,7 +39,8 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="w-full h-full min-h-screen bg-[#F8FAFC] text-[#1A1A1A] font-poppins relative overflow-x-hidden flex flex-col">
+      <div className="w-full h-full min-h-screen app-ambient text-textPrimary font-sans relative overflow-x-hidden flex flex-col">
+        <CursorGlowWithVisibility />
         <Navbar />
         <main className="flex-1 w-full max-w-7xl mx-auto px-0 sm:px-4 lg:px-8 pb-10 pt-24">
           <Routes>
@@ -54,6 +57,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/location-search" element={<LocationSearch />} />
+            <Route path="/navigate/:id" element={<NavigateRoute />} />
             
             {/* Profile Subpages */}
             <Route path="/profile/edit" element={<EditProfile />} />

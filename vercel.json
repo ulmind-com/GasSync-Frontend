@@ -5,6 +5,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/maps-api/:path*", "destination": "https://maps.googleapis.com/maps/api/:path*" },
+    { "source": "/routes-api/:path*", "destination": "https://routes.googleapis.com/:path*" },
     { "source": "/api/:path*", "destination": "https://gassync-backend.onrender.com/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]

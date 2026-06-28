@@ -11,6 +11,7 @@ import { useAuthStore } from '../store/authStore';
 import { applyVoteOptimistic, rollbackVote, invalidateVoteQueries } from '../lib/voteCache';
 import type { VoteType } from '../lib/voteCache';
 import { useToast } from '../components/Toast';
+import { TiltCard, SpotlightCard } from '../components/CursorEffects';
 
 // ─── Types ────────────────────────────────────────────────
 interface StationWithPrices {
@@ -221,111 +222,115 @@ export default function Home() {
   return (
     <div className="flex flex-col flex-1 pb-10 w-full">
       {/* Background Gradient */}
-      <div className="absolute top-0 left-0 right-0 h-80 bg-gradient-to-b from-[#208AEF]/10 to-transparent -z-10" />
+      <div className="absolute top-0 left-0 right-0 h-80 bg-gradient-to-b from-info/10 to-transparent -z-10" />
 
       <div className="pt-6">
         {/* ─── Header ─── */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="reveal flex justify-between items-center mb-8">
           <div>
-            <p className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wider">{t('profile.location')}</p>
+            <p className="text-sm font-semibold text-textMuted mb-2 uppercase tracking-wider">{t('profile.location')}</p>
             <button 
               onClick={() => navigate('/location-search')}
-              className="flex items-center gap-2 bg-white/80 backdrop-blur-md border border-gray-100 px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all hover:bg-white group"
+              className="flex items-center gap-2 glass px-4 py-2.5 rounded-xl shadow-glass-sm hover:shadow-glass transition-all group"
             >
-              <MapPin size={18} className="text-[#34C759]" />
-              <span className="font-semibold text-lg text-gray-900">{locationName}</span>
-              <ChevronDown size={18} className="text-gray-400 group-hover:text-gray-900 transition-colors" />
+              <MapPin size={18} className="text-primary" />
+              <span className="font-semibold text-lg text-textPrimary">{locationName}</span>
+              <ChevronDown size={18} className="text-textMuted group-hover:text-textPrimary transition-colors" />
             </button>
           </div>
         </div>
 
         {/* ─── Price Stats Card ─── */}
-        <div className="mb-8">
-          <h2 className="font-bold text-xl text-gray-900 mb-4">{t('home.marketOverview') || 'Market Overview'}</h2>
+        <div className="reveal mb-8">
+          <h2 className="font-heading font-bold text-xl text-textPrimary mb-4">{t('home.marketOverview') || 'Market Overview'}</h2>
           {isLoading ? (
-            <div className="bg-white rounded-2xl p-8 shadow-sm flex flex-col items-center justify-center min-h-[150px] border border-gray-100">
-              <div className="w-8 h-8 border-4 border-[#34C759] border-t-transparent rounded-full animate-spin" />
-              <p className="font-medium text-sm text-gray-500 mt-3">{t('home.fetchingPrices')}</p>
+            <div className="premium-card p-8 flex flex-col items-center justify-center min-h-[150px]">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="font-medium text-sm text-textMuted mt-3">{t('home.fetchingPrices')}</p>
             </div>
           ) : priceStats?.lowestStation ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative stagger-children">
               {/* Lowest Price */}
-              <button onClick={() => navigate(`/station/${priceStats.lowestStation!.station.id}`)} className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col text-left group">
+              <SpotlightCard className="premium-card premium-card-hover animate-fade-in-up cursor-pointer" spotlightColor="rgb(var(--color-primary) / 0.06)">
+              <button onClick={() => navigate(`/station/${priceStats.lowestStation!.station.id}`)} className="p-5 flex flex-col text-left group w-full">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#E8F8EC] group-hover:scale-105 transition-transform">
-                    <TrendingDown size={22} className="text-[#34C759]" />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-avatarBg group-hover:scale-105 transition-transform">
+                    <TrendingDown size={22} className="text-primary" />
                   </div>
                   <div>
-                    <p className="font-semibold text-xs text-gray-500 uppercase tracking-wider">{t('home.lowestNearYou')}</p>
-                    <p className="font-bold text-sm text-gray-900 mt-0.5 truncate">{priceStats.lowestStation.station.name}</p>
+                    <p className="font-semibold text-xs text-textMuted uppercase tracking-wider">{t('home.lowestNearYou')}</p>
+                    <p className="font-bold text-sm text-textPrimary mt-0.5 truncate">{priceStats.lowestStation.station.name}</p>
                   </div>
                 </div>
                 <div className="flex justify-between items-end mt-auto">
                   <div className="flex items-baseline gap-1">
-                    <span className="font-bold text-3xl text-gray-900 tracking-tight">${priceStats.lowestPrice.toFixed(2)}</span>
-                    <span className="font-medium text-sm text-gray-500">{t('home.perGal')}</span>
+                    <span className="font-bold text-3xl text-textPrimary tracking-tight">${priceStats.lowestPrice.toFixed(2)}</span>
+                    <span className="font-medium text-sm text-textMuted">{t('home.perGal')}</span>
                   </div>
-                  <ChevronRight size={20} className="text-gray-300 group-hover:text-[#34C759] group-hover:translate-x-1 transition-all" />
+                  <ChevronRight size={20} className="text-textMuted/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </div>
               </button>
+              </SpotlightCard>
 
               {/* Highest Price */}
-              <button onClick={() => navigate(`/station/${priceStats.highestStation!.station.id}`)} className="bg-white p-5 rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col text-left group">
+              <SpotlightCard className="premium-card premium-card-hover animate-fade-in-up cursor-pointer" spotlightColor="rgb(var(--color-warning) / 0.06)">
+              <button onClick={() => navigate(`/station/${priceStats.highestStation!.station.id}`)} className="p-5 flex flex-col text-left group w-full">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#FFF0E6] group-hover:scale-105 transition-transform">
-                    <TrendingUp size={22} className="text-[#FF6B00]" />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-warning/10 group-hover:scale-105 transition-transform">
+                    <TrendingUp size={22} className="text-warning" />
                   </div>
                   <div>
-                    <p className="font-semibold text-xs text-gray-500 uppercase tracking-wider">{t('home.highestNearYou')}</p>
-                    <p className="font-bold text-sm text-gray-900 mt-0.5 truncate">{priceStats.highestStation!.station.name}</p>
+                    <p className="font-semibold text-xs text-textMuted uppercase tracking-wider">{t('home.highestNearYou')}</p>
+                    <p className="font-bold text-sm text-textPrimary mt-0.5 truncate">{priceStats.highestStation!.station.name}</p>
                   </div>
                 </div>
                 <div className="flex justify-between items-end mt-auto">
                   <div className="flex items-baseline gap-1">
-                    <span className="font-bold text-3xl text-gray-900 tracking-tight">${priceStats.highestPrice.toFixed(2)}</span>
-                    <span className="font-medium text-sm text-gray-500">{t('home.perGal')}</span>
+                    <span className="font-bold text-3xl text-textPrimary tracking-tight">${priceStats.highestPrice.toFixed(2)}</span>
+                    <span className="font-medium text-sm text-textMuted">{t('home.perGal')}</span>
                   </div>
-                  <ChevronRight size={20} className="text-gray-300 group-hover:text-[#FF6B00] group-hover:translate-x-1 transition-all" />
+                  <ChevronRight size={20} className="text-textMuted/30 group-hover:text-warning group-hover:translate-x-1 transition-all" />
                 </div>
               </button>
+              </SpotlightCard>
 
               {/* Average */}
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+              <div className="premium-card p-5 flex flex-col animate-fade-in-up">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-[#F3F4F6]">
-                    <BarChart2 size={22} className="text-gray-600" />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-surfaceMuted">
+                    <BarChart2 size={22} className="text-textSecondary" />
                   </div>
                   <div>
-                    <p className="font-semibold text-xs text-gray-500 uppercase tracking-wider">{t('home.localAverage')}</p>
-                    <p className="font-bold text-sm text-gray-500 mt-0.5">{stationsWithPrices?.length || 0} {t('home.stationsAnalyzed')}</p>
+                    <p className="font-semibold text-xs text-textMuted uppercase tracking-wider">{t('home.localAverage')}</p>
+                    <p className="font-bold text-sm text-textMuted mt-0.5">{stationsWithPrices?.length || 0} {t('home.stationsAnalyzed')}</p>
                   </div>
                 </div>
                 <div className="flex justify-between items-end mt-auto">
                   <div className="flex items-baseline gap-1">
-                    <span className="font-bold text-3xl text-gray-900 tracking-tight">${priceStats.avgPrice.toFixed(2)}</span>
-                    <span className="font-medium text-sm text-gray-500">{t('home.perGal')}</span>
+                    <span className="font-bold text-3xl text-textPrimary tracking-tight">${priceStats.avgPrice.toFixed(2)}</span>
+                    <span className="font-medium text-sm text-textMuted">{t('home.perGal')}</span>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[150px]">
-              <MapPin size={28} className="text-gray-300" />
-              <p className="font-medium text-sm text-gray-500 mt-2">{t('home.noPriceData')}</p>
+              <MapPin size={28} className="text-textMuted/30" />
+              <p className="font-medium text-sm text-textMuted mt-2">{t('home.noPriceData')}</p>
             </div>
           )}
         </div>
 
         {/* ─── Fuel Type Breakdown Pills ─── */}
         {priceStats?.fuelBreakdown && priceStats.fuelBreakdown.length > 0 && (
-          <div className="mb-8">
-            <h2 className="font-bold text-lg text-gray-900 mb-3">Average by Fuel Type</h2>
+          <div className="reveal mb-8">
+            <h2 className="font-heading font-bold text-lg text-textPrimary mb-3">Average by Fuel Type</h2>
             <div className="flex flex-wrap gap-3">
               {priceStats.fuelBreakdown.map((fuel) => (
-                <div key={fuel.type} className="bg-white rounded-xl px-4 py-2 flex items-center gap-2 border border-gray-100 shadow-sm">
+                <div key={fuel.type} className="premium-card rounded-xl px-4 py-2 flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: fuel.color }} />
-                  <span className="font-medium text-sm text-gray-600">{fuel.label}</span>
-                  <span className="font-bold text-[15px] text-gray-900 ml-1">${fuel.avgPrice.toFixed(2)}</span>
+                  <span className="font-medium text-sm text-textSecondary">{fuel.label}</span>
+                  <span className="font-bold text-[15px] text-textPrimary ml-1">${fuel.avgPrice.toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -333,19 +338,19 @@ export default function Home() {
         )}
 
         {/* ─── Tabs: Market / Community ─── */}
-        <div className="flex bg-gray-100 rounded-2xl p-1 mb-5">
+        <div className="reveal flex bg-surfaceMuted rounded-2xl p-1 mb-5">
           <button
             onClick={() => setActiveTab('market')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl transition-all ${activeTab === 'market' ? 'bg-white shadow-sm text-gray-900 font-semibold' : 'text-gray-500 font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl transition-all ${activeTab === 'market' ? 'bg-surface shadow-sm text-textPrimary font-semibold' : 'text-textMuted font-medium'}`}
           >
-            <Map size={15} className={activeTab === 'market' ? 'text-[#34C759]' : 'text-gray-500'} />
+            <Map size={15} className={activeTab === 'market' ? 'text-primary' : 'text-textMuted'} />
             <span className="text-sm">{t('home.market')}</span>
           </button>
           <button
             onClick={() => setActiveTab('community')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl transition-all ${activeTab === 'community' ? 'bg-white shadow-sm text-gray-900 font-semibold' : 'text-gray-500 font-medium'}`}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl transition-all ${activeTab === 'community' ? 'bg-surface shadow-sm text-textPrimary font-semibold' : 'text-textMuted font-medium'}`}
           >
-            <Users size={15} className={activeTab === 'community' ? 'text-[#34C759]' : 'text-gray-500'} />
+            <Users size={15} className={activeTab === 'community' ? 'text-primary' : 'text-textMuted'} />
             <span className="text-sm">
               {t('home.community')} {allCommunityPrices.length > 0 ? `(${allCommunityPrices.length})` : ''}
             </span>
@@ -355,14 +360,14 @@ export default function Home() {
         {/* ─── Tab Content ─── */}
         {activeTab === 'market' ? (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-xl text-gray-900">{t('home.gasStations')}</h2>
-              <button onClick={() => navigate('/station/all')} className="font-semibold text-sm text-[#34C759]">See all</button>
+            <div className="reveal flex justify-between items-center mb-4">
+              <h2 className="font-heading font-bold text-xl text-textPrimary">{t('home.gasStations')}</h2>
+              <button onClick={() => navigate('/station/all')} className="font-semibold text-sm text-primary">See all</button>
             </div>
 
             {stationsLoading ? (
               <div className="flex justify-center mt-10">
-                <div className="w-8 h-8 border-4 border-[#34C759] border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
               </div>
             ) : stations.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -371,12 +376,13 @@ export default function Home() {
                   const regularPrice = sp?.fuelPrices?.find(fp => fp.type === 'REGULAR_UNLEADED')?.price || sp?.fuelPrices?.[0]?.price;
 
                   return (
-                    <button key={item.id} onClick={() => navigate(`/station/${item.id}`)} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-gray-100 text-left flex flex-col group">
-                      <div className="w-full h-40 bg-gray-100 relative flex items-center justify-center overflow-hidden">
+                    <TiltCard key={item.id} className="reveal premium-card overflow-hidden" tiltStrength={6} onClick={() => navigate(`/station/${item.id}`)}>
+                      <div className="text-left flex flex-col group cursor-pointer">
+                      <div className="w-full h-40 bg-surfaceMuted relative flex items-center justify-center overflow-hidden">
                         {item.photoRef ? (
                           <img src={getPhotoUrl(item.photoRef, 400)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         ) : (
-                          <MapPin size={32} className="text-[#34C759]" />
+                          <MapPin size={32} className="text-primary" />
                         )}
                         {regularPrice && (
                           <div className="absolute top-3 right-3 bg-black/70 px-3 py-1.5 rounded-lg backdrop-blur-md">
@@ -385,28 +391,29 @@ export default function Home() {
                         )}
                       </div>
                       <div className="p-4 flex flex-col flex-1">
-                        <h3 className="font-bold text-base text-gray-900 truncate mb-1">{item.name}</h3>
-                        {item.address && <p className="font-medium text-xs text-gray-500 truncate mb-3">{item.address}</p>}
+                        <h3 className="font-bold text-base text-textPrimary truncate mb-1">{item.name}</h3>
+                        {item.address && <p className="font-medium text-xs text-textMuted truncate mb-3">{item.address}</p>}
                         <div className="flex items-center gap-2 mt-auto">
-                          <div className="flex items-center bg-[#FFF8E6] px-2 py-1 rounded-md">
+                          <div className="flex items-center bg-warning/10 px-2 py-1 rounded-md">
                             <Star size={12} className="text-[#FFB800] fill-[#FFB800] mr-1" />
-                            <span className="font-bold text-xs text-[#B38000]">{item.rating > 0 ? item.rating.toFixed(1) : 'New'}</span>
+                            <span className="font-bold text-xs text-[#B38000] dark:text-[#FFD060]">{item.rating > 0 ? item.rating.toFixed(1) : 'New'}</span>
                           </div>
-                          {item.totalRatings > 0 && <span className="font-medium text-xs text-gray-400">({item.totalRatings})</span>}
-                          <div className="flex items-center text-gray-400 ml-auto">
+                          {item.totalRatings > 0 && <span className="font-medium text-xs text-textMuted">({item.totalRatings})</span>}
+                          <div className="flex items-center text-textMuted ml-auto">
                             <Navigation size={12} className="mr-1" />
                             <span className="font-medium text-xs">Nearby</span>
                           </div>
                         </div>
                       </div>
-                    </button>
+                      </div>
+                    </TiltCard>
                   );
                 })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center mt-10 gap-3">
-                <MapPin size={28} className="text-gray-300" />
-                <p className="font-medium text-[15px] text-gray-500 text-center">
+                <MapPin size={28} className="text-textMuted/30" />
+                <p className="font-medium text-[15px] text-textMuted text-center">
                   {lat ? 'No stations found nearby' : 'Getting your location...'}
                 </p>
               </div>
@@ -414,72 +421,72 @@ export default function Home() {
           </div>
         ) : (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-xl text-gray-900">{t('home.communityReports')}</h2>
+            <div className="reveal flex justify-between items-center mb-4">
+              <h2 className="font-heading font-bold text-xl text-textPrimary">{t('home.communityReports')}</h2>
             </div>
             
             {communityPricesLoading ? (
               <div className="flex flex-col items-center justify-center mt-10 gap-3">
-                <Loader2 size={32} className="text-[#34C759] animate-spin" />
-                <p className="font-medium text-[15px] text-gray-500 text-center">Loading community reports...</p>
+                <Loader2 size={32} className="text-primary animate-spin" />
+                <p className="font-medium text-[15px] text-textMuted text-center">Loading community reports...</p>
               </div>
             ) : allCommunityPrices.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
                 {allCommunityPrices.map((cp: any, idx: number) => (
-                  <button key={idx} onClick={() => navigate(`/station/${cp.stationId}`)} className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all border border-gray-100 text-left flex flex-col w-full group">
+                  <button key={idx} onClick={() => navigate(`/station/${cp.stationId}`)} className="premium-card premium-card-hover p-5 text-left flex flex-col w-full group animate-fade-in-up">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3 min-w-0">
                         {cp.reportedByAvatar ? (
-                          <img src={cp.reportedByAvatar} alt={cp.reportedBy} className="w-12 h-12 rounded-full object-cover border border-gray-100" />
+                          <img src={cp.reportedByAvatar} alt={cp.reportedBy} className="w-12 h-12 rounded-full object-cover border border-border" />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E8F8EC] to-[#D5F3E0] flex items-center justify-center border border-gray-100">
-                            <User size={18} className="text-[#34C759]" />
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-avatarBg to-primary/10 flex items-center justify-center border border-border">
+                            <User size={18} className="text-primary" />
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="font-bold text-sm text-gray-900 truncate">{cp.reportedBy}</p>
-                          <p className="font-medium text-xs text-gray-500 truncate mt-0.5">{cp.stationName}</p>
+                          <p className="font-bold text-sm text-textPrimary truncate">{cp.reportedBy}</p>
+                          <p className="font-medium text-xs text-textMuted truncate mt-0.5">{cp.stationName}</p>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-end justify-between bg-gray-50 p-4 rounded-xl mb-4">
+                    <div className="flex items-end justify-between bg-surfaceMuted p-4 rounded-xl mb-4">
                       <div>
-                        <span className="font-medium text-[11px] text-gray-500 uppercase tracking-wider mb-1 block">Reported Price</span>
-                        <div className="bg-[#E8F8EC] px-2.5 py-1 rounded-md inline-block">
-                          <span className="font-bold text-xs text-[#34C759] capitalize">{cp.fuelType || 'regular'}</span>
+                        <span className="font-medium text-[11px] text-textMuted uppercase tracking-wider mb-1 block">Reported Price</span>
+                        <div className="bg-avatarBg px-2.5 py-1 rounded-md inline-block">
+                          <span className="font-bold text-xs text-primary capitalize">{cp.fuelType || 'regular'}</span>
                         </div>
                       </div>
-                      <span className="font-bold text-3xl text-gray-900 tracking-tight">${cp.price?.toFixed(2)}</span>
+                      <span className="font-bold text-3xl text-textPrimary tracking-tight">${cp.price?.toFixed(2)}</span>
                     </div>
 
-                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-border">
                       <div className="flex items-center gap-1.5">
-                        <Camera size={14} className="text-gray-400" />
-                        <span className="font-medium text-[12px] text-gray-500">{formatDate(cp.billDate)}</span>
+                        <Camera size={14} className="text-textMuted" />
+                        <span className="font-medium text-[12px] text-textMuted">{formatDate(cp.billDate)}</span>
                       </div>
                       <div className="flex items-center gap-4">
                         <button 
-                          className={`flex items-center gap-1.5 transition-all duration-200 hover:scale-110 active:scale-95 rounded-lg px-2 py-1 -mx-2 -my-1 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#34C759]/10' : 'hover:bg-gray-100'}`}
+                          className={`flex items-center gap-1.5 transition-all duration-200 hover:scale-110 active:scale-95 rounded-lg px-2 py-1 -mx-2 -my-1 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'bg-primary/10' : 'hover:bg-surfaceMuted'}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!user) return showToast(t('common.loginRequired') || 'Please log in again to continue.', 'error');
                             handleVote(cp.id, 'helpful');
                           }}
                         >
-                          <ThumbsUp size={16} className={`transition-colors duration-200 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759] fill-[#34C759]/20' : 'text-gray-400'}`} />
-                          <span className={`text-sm font-semibold transition-colors duration-200 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-[#34C759]' : 'text-gray-500'}`}>{cp.helpfulCount || 0}</span>
+                          <ThumbsUp size={16} className={`transition-colors duration-200 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-primary fill-primary/20' : 'text-textMuted'}`} />
+                          <span className={`text-sm font-semibold transition-colors duration-200 ${cp.helpfulUsers?.includes(user?._id || user?.id) ? 'text-primary' : 'text-textMuted'}`}>{cp.helpfulCount || 0}</span>
                         </button>
                         <button 
-                          className={`flex items-center gap-1.5 transition-all duration-200 hover:scale-110 active:scale-95 rounded-lg px-2 py-1 -mx-2 -my-1 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'bg-[#FF3B30]/10' : 'hover:bg-gray-100'}`}
+                          className={`flex items-center gap-1.5 transition-all duration-200 hover:scale-110 active:scale-95 rounded-lg px-2 py-1 -mx-2 -my-1 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'bg-error/10' : 'hover:bg-surfaceMuted'}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!user) return showToast(t('common.loginRequired') || 'Please log in again to continue.', 'error');
                             handleVote(cp.id, 'not-helpful');
                           }}
                         >
-                          <ThumbsDown size={16} className={`transition-colors duration-200 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30] fill-[#FF3B30]/20' : 'text-gray-400'}`} />
-                          <span className={`text-sm font-semibold transition-colors duration-200 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-[#FF3B30]' : 'text-gray-500'}`}>{cp.notHelpfulCount || 0}</span>
+                          <ThumbsDown size={16} className={`transition-colors duration-200 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-error fill-error/20' : 'text-textMuted'}`} />
+                          <span className={`text-sm font-semibold transition-colors duration-200 ${cp.notHelpfulUsers?.includes(user?._id || user?.id) ? 'text-error' : 'text-textMuted'}`}>{cp.notHelpfulCount || 0}</span>
                         </button>
                       </div>
                     </div>
@@ -488,11 +495,11 @@ export default function Home() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center mt-10 gap-3">
-                <Users size={32} className="text-gray-300" />
-                <p className="font-medium text-[15px] text-gray-500 text-center">{t('station.noReports')}</p>
-                <button onClick={() => navigate('/map')} className="flex items-center gap-2 bg-[#E8F8EC] px-5 py-3 rounded-full mt-1 hover:bg-[#d4f2dc] transition-colors">
-                  <Map size={14} className="text-[#34C759]" />
-                  <span className="font-semibold text-sm text-[#34C759]">{t('home.exploreMap')}</span>
+                <Users size={32} className="text-textMuted/30" />
+                <p className="font-medium text-[15px] text-textMuted text-center">{t('station.noReports')}</p>
+                <button onClick={() => navigate('/map')} className="flex items-center gap-2 bg-avatarBg px-5 py-3 rounded-full mt-1 hover:bg-primary/15 transition-colors">
+                  <Map size={14} className="text-primary" />
+                  <span className="font-semibold text-sm text-primary">{t('home.exploreMap')}</span>
                 </button>
               </div>
             )}

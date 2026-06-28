@@ -28,28 +28,28 @@ export function useToast() {
 const TOAST_CONFIG: Record<ToastType, { icon: React.ReactNode; gradient: string; border: string; text: string; iconBg: string }> = {
   success: {
     icon: <CheckCircle size={20} />,
-    gradient: 'from-[#34C759]/10 via-white to-white',
+    gradient: 'from-[#34C759]/10 via-surface to-surface',
     border: 'border-[#34C759]/20',
     text: 'text-[#34C759]',
     iconBg: 'bg-[#34C759]',
   },
   error: {
     icon: <XCircle size={20} />,
-    gradient: 'from-[#FF3B30]/10 via-white to-white',
+    gradient: 'from-[#FF3B30]/10 via-surface to-surface',
     border: 'border-[#FF3B30]/20',
     text: 'text-[#FF3B30]',
     iconBg: 'bg-[#FF3B30]',
   },
   warning: {
     icon: <AlertTriangle size={20} />,
-    gradient: 'from-[#FF9500]/10 via-white to-white',
+    gradient: 'from-[#FF9500]/10 via-surface to-surface',
     border: 'border-[#FF9500]/20',
     text: 'text-[#FF9500]',
     iconBg: 'bg-[#FF9500]',
   },
   info: {
     icon: <Info size={20} />,
-    gradient: 'from-[#208AEF]/10 via-white to-white',
+    gradient: 'from-[#208AEF]/10 via-surface to-surface',
     border: 'border-[#208AEF]/20',
     text: 'text-[#208AEF]',
     iconBg: 'bg-[#208AEF]',
@@ -93,7 +93,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
   return (
     <div
       className={`
-        relative flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border backdrop-blur-xl
+        relative flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border glass
         bg-gradient-to-r ${config.gradient} ${config.border}
         ${isExiting ? 'animate-toast-exit' : 'animate-toast-enter'}
         max-w-[420px] w-full overflow-hidden cursor-default
@@ -106,20 +106,20 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
       </div>
 
       {/* Message */}
-      <p className="flex-1 text-sm font-semibold text-gray-800 leading-snug pr-2">
+      <p className="flex-1 text-sm font-semibold text-textPrimary leading-snug pr-2">
         {toast.message}
       </p>
 
       {/* Close button */}
       <button
         onClick={handleClose}
-        className="flex-shrink-0 w-7 h-7 rounded-lg bg-gray-100/80 hover:bg-gray-200 flex items-center justify-center transition-colors"
+        className="flex-shrink-0 w-7 h-7 rounded-lg bg-surfaceMuted/80 hover:bg-surfaceMuted flex items-center justify-center transition-colors"
       >
-        <X size={14} className="text-gray-500" />
+        <X size={14} className="text-textMuted" />
       </button>
 
       {/* Progress bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gray-100/50 rounded-b-2xl overflow-hidden">
+      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-surfaceMuted/50 rounded-b-2xl overflow-hidden">
         <div
           className={`h-full ${config.iconBg} rounded-b-2xl transition-all ease-linear`}
           style={{ width: `${progress}%`, transitionDuration: '30ms' }}

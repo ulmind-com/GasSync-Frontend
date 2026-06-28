@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Compass, MapPin, Heart, User, Bell } from 'lucide-react';
+import { Compass, MapPin, Heart, User, Bell, Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Magnetic } from './CursorEffects';
 
 const Navbar = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { isDark, toggleTheme } = useThemeStore();
 
   const tabs = [
     { name: t('navbar.home') || 'Home', path: '/home', icon: Compass },
@@ -27,7 +30,12 @@ const Navbar = () => {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="fixed top-4 inset-x-0 mx-auto max-w-[90%] sm:max-w-3xl z-50 bg-white/80 backdrop-blur-md border border-gray-200/50 shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] rounded-full px-4 sm:px-6"
+        className="fixed top-4 inset-x-0 mx-auto max-w-[90%] sm:max-w-3xl z-50 glass rounded-full px-4 sm:px-6"
+        style={{
+          boxShadow: isDark
+            ? '0 2px 24px -4px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)'
+            : '0 2px 24px -4px rgba(0,0,0,0.08), 0 0 0 1px rgba(25,28,33,0.06)',
+        }}
       >
         <div className="flex justify-between h-14 items-center">
           {/* Logo & Brand */}
@@ -35,8 +43,10 @@ const Navbar = () => {
             className="flex items-center cursor-pointer gap-2 shrink-0" 
             onClick={() => navigate('/home')}
           >
+            <Magnetic strength={0.25}>
             <img src="/gassync_logo.png" alt="GasSync" className="w-9 h-9 rounded-xl object-contain" />
-            <span className="font-bold text-lg text-gray-900 tracking-tight hidden md:block">GasSync</span>
+            </Magnetic>
+            <span className="font-heading font-bold text-lg text-textPrimary tracking-tight hidden md:block">GasSync</span>
           </div>
 
           {/* Navigation Links */}
@@ -49,12 +59,19 @@ const Navbar = () => {
                 <NavLink
                   key={tab.name}
                   to={tab.path}
-                  className={`flex items-center px-3 py-1.5 rounded-full transition-all duration-200 group ${
-                    isActive ? 'bg-[#34C759] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100/80 hover:text-gray-900'
+                  className={`flex items-center px-4 py-2 rounded-full transition-all duration-200 group ${
+                    isActive 
+                      ? 'shadow-md' 
+                      : 'text-textMuted hover:bg-surfaceMuted hover:text-textPrimary'
                   }`}
+                  style={isActive ? {
+                    background: 'linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-primary-strong)))',
+                    color: 'white',
+                    boxShadow: '0 4px 14px -4px rgb(var(--color-primary) / 0.5)',
+                  } : undefined}
                 >
-                  <Icon size={18} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'} />
-                  <span className={`ml-1.5 font-medium text-[14px] hidden sm:block ${isActive ? 'text-white' : 'text-gray-600'}`}>
+                  <Icon size={18} className={isActive ? 'text-white' : 'text-iconMuted group-hover:text-textSecondary'} style={isActive ? { color: 'white' } : undefined} />
+                  <span className={`ml-1.5 font-semibold text-[14px] hidden sm:block`} style={isActive ? { color: 'white' } : undefined}>
                     {tab.name}
                   </span>
                 </NavLink>
@@ -63,27 +80,60 @@ const Navbar = () => {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5 shrink-0">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle text-textSecondary hover:text-textPrimary"
+              aria-label="Toggle dark mode"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {isDark ? (
+                  <motion.div
+                    key="sun"
+                    initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  >
+                    <Sun size={19} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="moon"
+                    initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  >
+                    <Moon size={19} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </button>
+
             <button 
               onClick={() => navigate('/notifications')}
-              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors relative"
+              className="p-1.5 rounded-full text-textMuted hover:text-textPrimary hover:bg-surfaceMuted transition-colors relative"
             >
               <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-[#FF3B30] rounded-full border-2 border-white"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
             </button>
             
+            <Magnetic strength={0.3}>
             <button 
               onClick={() => navigate('/profile')}
               className="flex items-center focus:outline-none"
             >
-              <div className="w-8 h-8 rounded-full bg-[#E8F8EC] flex items-center justify-center overflow-hidden border border-[#34C759]/20 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-8 h-8 rounded-full bg-avatarBg flex items-center justify-center overflow-hidden border border-primary/20 shadow-sm hover:shadow-md hover:scale-110 transition-all">
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <User size={16} className="text-[#34C759]" />
+                  <User size={16} className="text-primary" />
                 )}
               </div>
             </button>
+            </Magnetic>
           </div>
         </div>
       </motion.nav>

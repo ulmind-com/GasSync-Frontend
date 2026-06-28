@@ -131,17 +131,17 @@ export default function Register() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC] relative overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-background relative overflow-hidden">
       {/* Background Gradient */}
-      <div className="absolute top-0 left-0 right-0 h-full bg-gradient-to-b from-[#208AEF]/20 via-[#F8FAFC] to-[#F8FAFC] -z-10" />
+      <div className="absolute top-0 left-0 right-0 h-full app-ambient -z-10" />
 
       <div className="flex flex-col flex-1 px-6 justify-center max-w-md mx-auto w-full py-12">
         <div className="flex flex-col items-center mb-12">
-          <div className="w-20 h-20 rounded-[40px] bg-white shadow-[0_10px_20px_rgba(52,199,89,0.2)] mb-6 overflow-hidden flex items-center justify-center">
+          <div className="w-20 h-20 rounded-[40px] liquid-glass shadow-premium-lg mb-6 overflow-hidden flex items-center justify-center">
             <img src="/gassync_logo.png" alt="GasSync Logo" className="w-full h-full object-cover" />
           </div>
-          <h1 className="font-bold text-3xl text-gray-900 mb-2">{t('auth.signUpTitle')}</h1>
-          <p className="font-normal text-base text-gray-500 text-center">
+          <h1 className="font-bold text-3xl text-textPrimary mb-2">{t('auth.signUpTitle')}</h1>
+          <p className="font-normal text-base text-textSecondary text-center">
             {step === 1 && 'Enter your email to get started'}
             {step === 2 && `We sent a code to ${email}`}
             {step === 3 && 'Just a few more details'}
@@ -150,18 +150,18 @@ export default function Register() {
 
         <div className="w-full flex flex-col min-h-[220px]">
           {error && (
-            <div className="bg-red-50 text-[#FF3B30] text-sm font-medium px-4 py-3 rounded-2xl mb-4 text-center border border-red-100">
+            <div className="bg-error/10 text-error text-sm font-medium px-4 py-3 rounded-2xl mb-4 text-center border border-error/20">
               {error}
             </div>
           )}
 
           {step === 1 && (
             <form onSubmit={handleSendOTP} className="w-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="flex items-center bg-white h-[60px] rounded-[30px] mb-6 px-5 border border-gray-100 shadow-[0_4px_8px_rgba(0,0,0,0.03)] focus-within:border-[#34C759] focus-within:shadow-[0_4px_12px_rgba(52,199,89,0.1)] transition-all">
-                <Mail size={20} className="text-gray-400 mr-3" />
+              <div className="premium-input flex items-center h-[60px] mb-6 px-5">
+                <Mail size={20} className="text-textMuted mr-3" />
                 <input
                   type="email"
-                  className="flex-1 bg-transparent outline-none font-medium text-base text-gray-900 placeholder:text-gray-400"
+                  className="flex-1 bg-transparent outline-none font-medium text-base text-textPrimary placeholder:text-textMuted"
                   placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -172,22 +172,22 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-[60px] rounded-[30px] bg-gradient-to-r from-[#34C759] to-[#2EAE4E] shadow-[0_8px_16px_rgba(52,199,89,0.3)] flex items-center justify-center font-semibold text-lg text-white hover:opacity-95 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed mb-6"
+                className="btn-primary w-full h-[60px] rounded-[30px] text-lg disabled:opacity-70 disabled:cursor-not-allowed mb-6"
               >
                 {loading ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Send OTP'}
               </button>
 
               <div className="flex items-center mb-6">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="mx-4 font-medium text-sm text-gray-500">OR</span>
-                <div className="flex-1 h-px bg-gray-200" />
+                <div className="flex-1 h-px bg-border" />
+                <span className="mx-4 font-medium text-sm text-textMuted">OR</span>
+                <div className="flex-1 h-px bg-border" />
               </div>
 
               <button
                 type="button"
                 onClick={() => handleGoogleLogin()}
                 disabled={loading}
-                className="flex items-center justify-center h-[60px] rounded-[30px] bg-white border border-gray-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:bg-gray-50 transition-colors disabled:opacity-70 disabled:cursor-not-allowed font-semibold text-base text-gray-900"
+                className="premium-input flex items-center justify-center h-[60px] hover:bg-surfaceMuted transition-colors disabled:opacity-70 disabled:cursor-not-allowed font-semibold text-base text-textPrimary"
               >
                 <img src="/google_logo.svg" alt="Google" className="w-6 h-6 mr-3" />
                 Continue with Google
@@ -208,7 +208,7 @@ export default function Register() {
                     value={digit}
                     onChange={(e) => handleOtpChange(e.target.value, index)}
                     onKeyDown={(e) => handleOtpKeyDown(e, index)}
-                    className="w-[60px] h-[60px] bg-white rounded-2xl border border-gray-200 shadow-[0_4px_8px_rgba(0,0,0,0.03)] text-center text-2xl font-semibold text-gray-900 outline-none focus:border-[#34C759] focus:shadow-[0_4px_12px_rgba(52,199,89,0.1)] transition-all"
+                    className="w-[60px] h-[60px] premium-input text-center text-2xl font-semibold text-textPrimary outline-none"
                   />
                 ))}
               </div>
@@ -216,7 +216,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-[60px] rounded-[30px] bg-gradient-to-r from-[#34C759] to-[#2EAE4E] shadow-[0_8px_16px_rgba(52,199,89,0.3)] flex items-center justify-center font-semibold text-lg text-white hover:opacity-95 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed"
+                className="btn-primary w-full h-[60px] rounded-[30px] text-lg disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Verify OTP'}
               </button>
@@ -225,11 +225,11 @@ export default function Register() {
 
           {step === 3 && (
             <form onSubmit={handleRegister} className="w-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="flex items-center bg-white h-[60px] rounded-[30px] mb-4 px-5 border border-gray-100 shadow-[0_4px_8px_rgba(0,0,0,0.03)] focus-within:border-[#34C759] focus-within:shadow-[0_4px_12px_rgba(52,199,89,0.1)] transition-all">
-                <User size={20} className="text-gray-400 mr-3" />
+              <div className="premium-input flex items-center h-[60px] mb-4 px-5">
+                <User size={20} className="text-textMuted mr-3" />
                 <input
                   type="text"
-                  className="flex-1 bg-transparent outline-none font-medium text-base text-gray-900 placeholder:text-gray-400"
+                  className="flex-1 bg-transparent outline-none font-medium text-base text-textPrimary placeholder:text-textMuted"
                   placeholder={t('auth.fullNamePlaceholder')}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
@@ -237,17 +237,17 @@ export default function Register() {
                 />
               </div>
 
-              <div className="flex items-center bg-white h-[60px] rounded-[30px] mb-6 px-5 border border-gray-100 shadow-[0_4px_8px_rgba(0,0,0,0.03)] focus-within:border-[#34C759] focus-within:shadow-[0_4px_12px_rgba(52,199,89,0.1)] transition-all">
-                <Lock size={20} className="text-gray-400 mr-3" />
+              <div className="premium-input flex items-center h-[60px] mb-6 px-5">
+                <Lock size={20} className="text-textMuted mr-3" />
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  className="flex-1 bg-transparent outline-none font-medium text-base text-gray-900 placeholder:text-gray-400"
+                  className="flex-1 bg-transparent outline-none font-medium text-base text-textPrimary placeholder:text-textMuted"
                   placeholder="Password (Min 8 chars)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="p-1 text-gray-400 hover:text-gray-600 focus:outline-none">
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="p-1 text-textMuted hover:text-textSecondary focus:outline-none transition-colors">
                   {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                 </button>
               </div>
@@ -255,7 +255,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-[60px] rounded-[30px] bg-gradient-to-r from-[#34C759] to-[#2EAE4E] shadow-[0_8px_16px_rgba(52,199,89,0.3)] flex items-center justify-center font-semibold text-lg text-white hover:opacity-95 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed"
+                className="btn-primary w-full h-[60px] rounded-[30px] text-lg disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" /> : t('auth.signUpButton')}
               </button>
@@ -264,8 +264,8 @@ export default function Register() {
         </div>
 
         <div className="flex justify-center mt-12">
-          <span className="font-normal text-[15px] text-gray-500">{t('auth.hasAccount')} </span>
-          <button onClick={() => navigate(returnTo ? `/login?returnTo=${returnTo}` : '/login')} className="font-semibold text-[15px] text-[#34C759] ml-1 hover:underline">
+          <span className="font-normal text-[15px] text-textSecondary">{t('auth.hasAccount')} </span>
+          <button onClick={() => navigate(returnTo ? `/login?returnTo=${returnTo}` : '/login')} className="font-semibold text-[15px] text-primary ml-1 hover:underline">
             {t('auth.signInLink')}
           </button>
         </div>

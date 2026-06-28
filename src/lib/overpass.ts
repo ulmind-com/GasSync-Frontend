@@ -154,6 +154,121 @@ export async function searchGasStations(
   }
 }
 
+// ─── Route / Directions (Google Routes API "New") ───
+
+export interface RoutePoint {
+  lat: number;
+  lng: number;
+}
+
+export interface RouteResult {
+  points: RoutePoint[];      // decoded polyline for drawing the green line
+  distanceMeters: number;
+  durationSeconds: number;
+  distanceText: string;      // e.g. "8.8 mi"
+  durationText: string;      // e.g. "13 min"
+}
+
+/**
+ * Decode a Google encoded polyline string into lat/lng points.
+ * https://developers.google.com/maps/documentation/utilities/polylinealgorithm
+ */
+function decodePolyline(encoded: string): RoutePoint[] {
+  const points: RoutePoint[] = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+
+  while (index < encoded.length) {
+    let result = 0;
+    let shift = 0;
+    let byte: number;
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+    lat += result & 1 ? ~(result >> 1) : result >> 1;
+
+    result = 0;
+    shift = 0;
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+    lng += result & 1 ? ~(result >> 1) : result >> 1;
+
+    points.push({ lat: lat / 1e5, lng: lng / 1e5 });
+  }
+  return points;
+}
+
+function formatDistance(meters: number): string {
+  const miles = meters / 1609.344;
+  if (miles < 0.1) return `${Math.round(meters)} m`;
+  if (miles < 10) return `${miles.toFixed(1)} mi`;
+  return `${Math.round(miles)} mi`;
+}
+
+function formatDuration(seconds: number): string {
+  const mins = Math.round(seconds / 60);
+  if (mins < 1) return '< 1 min';
+  if (mins < 60) return `${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  const rem = mins % 60;
+  return rem === 0 ? `${hrs} hr` : `${hrs} hr ${rem} min`;
+}
+
+/**
+ * Compute the shortest driving route between two coordinates using the
+ * Google Routes API (the legacy Directions API is disabled on this key).
+ * Returns the decoded polyline plus ETA/distance, or null on failure.
+ */
+export async function getRoute(
+  origin: RoutePoint,
+  destination: RoutePoint
+): Promise<RouteResult | null> {
+  try {
+    const res = await axios.post(
+      '/routes-api/directions/v2:computeRoutes',
+      {
+        origin: { location: { latLng: { latitude: origin.lat, longitude: origin.lng } } },
+        destination: { location: { latLng: { latitude: destination.lat, longitude: destination.lng } } },
+        travelMode: 'DRIVE',
+        routingPreference: 'TRAFFIC_AWARE',
+        polylineQuality: 'HIGH_QUALITY',
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
+          'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
+        },
+        timeout: 12000,
+      }
+    );
+
+    const route = res.data?.routes?.[0];
+    const encoded = route?.polyline?.encodedPolyline;
+    if (!route || !encoded) return null;
+
+    const distanceMeters = route.distanceMeters ?? 0;
+    const durationSeconds = parseInt(String(route.duration || '0').replace('s', ''), 10) || 0;
+
+    return {
+      points: decodePolyline(encoded),
+      distanceMeters,
+      durationSeconds,
+      distanceText: formatDistance(distanceMeters),
+      durationText: formatDuration(durationSeconds),
+    };
+  } catch (error) {
+    console.warn('Google Routes API error:', error);
+    return null;
+  }
+}
+
 /**
  * Get photo URL from photo_reference
  */

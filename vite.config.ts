@@ -17,6 +17,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/maps-api/, '')
       },
+      '/routes-api': {
+        target: 'https://routes.googleapis.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/routes-api/, '')
+      },
       '/api/v1': {
         target: 'https://gassync-backend.onrender.com',
         changeOrigin: true
