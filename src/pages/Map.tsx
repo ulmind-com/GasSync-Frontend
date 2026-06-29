@@ -199,7 +199,6 @@ export default function MapScreen() {
                       <div className="flex items-center"><Star size={10} className="text-[#FFB800] fill-[#FFB800] mr-1" /><span className="font-bold text-[11px] text-textSecondary">{item.rating > 0 ? item.rating.toFixed(1) : 'New'}</span></div>
                       <span className="text-textMuted/30 text-[10px]">•</span>
                       <span className="font-medium text-[11px] text-textMuted">{calculateDistanceMiles(lat!, lon!, item.lat, item.lon).toFixed(1)} mi</span>
-                      {stationPrices?.[item.id] && <span className="font-medium text-[11px] text-primary ml-auto">Regular 87</span>}
                     </div>
                   </div>
                 </button>

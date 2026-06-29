@@ -105,32 +105,29 @@ export default function StationAll() {
                         <MapPin size={48} className="text-primary" />
                       </div>
                     )}
-                    <div className="absolute top-3 right-3 flex flex-col items-end px-3.5 py-2 rounded-xl bg-black/75 backdrop-blur-md shadow-md">
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-bold text-[16px] text-white tracking-tight">{stationPrices?.[item.id] ? `$${stationPrices[item.id].toFixed(2)}` : '—'}</span>
-                        <span className="font-medium text-[10px] text-white/70">/gal</span>
-                      </div>
-                      <span className="font-semibold text-[9px] text-white/60 uppercase tracking-wide">Regular 87</span>
+                    <div className="absolute top-3 right-3 flex items-baseline gap-1 px-3.5 py-2 rounded-xl bg-black/75 backdrop-blur-md shadow-md">
+                      <span className="font-bold text-[16px] text-white tracking-tight">{stationPrices?.[item.id] ? `$${stationPrices[item.id].toFixed(2)}` : '—'}</span>
+                      <span className="font-medium text-[10px] text-white/70">/gal</span>
                     </div>
                   </div>
                   <div className="flex flex-col flex-1 min-w-0 w-full px-1">
                     <h3 className="font-bold text-[19px] text-textPrimary truncate mb-1.5 tracking-tight">{item.name}</h3>
                     {item.address && <p className="font-medium text-[13px] text-textMuted truncate mb-5">{item.address}</p>}
-                    <div className="flex items-center gap-2 mt-auto">
-                      <div className="flex items-center bg-surfaceMuted border border-border px-3 py-1.5 rounded-xl">
-                        <Star size={14} className="text-[#FFB800] fill-[#FFB800] mr-1.5" />
-                        <span className="font-bold text-[13px] text-textPrimary">{item.rating > 0 ? item.rating.toFixed(1) : 'New'}</span>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-auto">
+                      <div className="flex items-center shrink-0 whitespace-nowrap bg-surfaceMuted border border-border px-2.5 py-1.5 rounded-xl">
+                        <Star size={13} className="text-[#FFB800] fill-[#FFB800] mr-1" />
+                        <span className="font-bold text-[12px] text-textPrimary">{item.rating > 0 ? item.rating.toFixed(1) : 'New'}</span>
                         {item.totalRatings > 0 && <span className="font-medium text-[11px] text-textMuted ml-1">({item.totalRatings})</span>}
                       </div>
-                      <div className={`flex items-center border px-3 py-1.5 rounded-xl ${item.isOpen ? 'bg-avatarBg border-primary/20' : 'bg-warning/10 border-warning/20'}`}>
-                        <Clock size={14} className={item.isOpen ? 'text-primary' : 'text-warning'} />
-                        <span className={`font-bold text-[13px] ml-1.5 ${item.isOpen ? 'text-primary' : 'text-warning'}`}>
+                      <div className={`flex items-center shrink-0 whitespace-nowrap border px-2.5 py-1.5 rounded-xl ${item.isOpen ? 'bg-avatarBg border-primary/20' : 'bg-warning/10 border-warning/20'}`}>
+                        <Clock size={13} className={item.isOpen ? 'text-primary' : 'text-warning'} />
+                        <span className={`font-bold text-[12px] ml-1 ${item.isOpen ? 'text-primary' : 'text-warning'}`}>
                           {item.isOpen === true ? 'Open' : item.isOpen === false ? 'Closed' : 'Unknown'}
                         </span>
                       </div>
-                      <div className="flex items-center bg-surfaceMuted border border-border px-3 py-1.5 rounded-xl">
-                        <Navigation size={14} className="text-textMuted mr-1.5" />
-                        <span className="font-bold text-[13px] text-textPrimary">{item.distanceMiles.toFixed(1)} mi</span>
+                      <div className="flex items-center shrink-0 whitespace-nowrap bg-surfaceMuted border border-border px-2.5 py-1.5 rounded-xl">
+                        <Navigation size={13} className="text-textMuted mr-1" />
+                        <span className="font-bold text-[12px] text-textPrimary">{item.distanceMiles.toFixed(1)} mi</span>
                       </div>
                     </div>
                   </div>
