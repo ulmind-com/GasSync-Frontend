@@ -5,6 +5,7 @@ import { ArrowLeft, Search, MapPin } from 'lucide-react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { useLocationStore } from '../store/locationStore';
 import { useThemeStore } from '../store/themeStore';
+import { buildShortAddress } from '../lib/overpass';
 
 const darkMapStyle = [
   { "elementType": "geometry", "stylers": [{ "color": "#212121" }] },
@@ -80,7 +81,21 @@ export default function LocationSearch() {
       const url = `${MAPS_API_BASE}/geocode/json?latlng=${tempLat},${tempLon}&key=${GOOGLE_API_KEY}`;
       const res = await fetch(url); const json = await res.json();
       let cityName = 'Unknown Location';
-      if (json.results && json.results.length > 0) cityName = json.results[0].formatted_address;
+      if (json.results && json.results.length > 0) {
+        const result = json.results[0];
+        const comp = result.address_components || [];
+        const get = (type: string) => {
+          const c = comp.find((x: any) => x.types?.includes(type));
+          return c?.short_name || c?.long_name;
+        };
+        cityName = buildShortAddress({
+          houseNumber: get('street_number'),
+          street: get('route'),
+          city: get('locality') || get('postal_town') || get('sublocality') || get('administrative_area_level_2'),
+          state: get('administrative_area_level_1'),
+          postcode: get('postal_code'),
+        }) || result.formatted_address;
+      }
       setLocation(tempLat, tempLon, cityName); navigate(-1);
     } catch { setLocation(tempLat, tempLon, 'Unknown Location'); navigate(-1); }
   };

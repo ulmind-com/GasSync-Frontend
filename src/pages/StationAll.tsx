@@ -1,8 +1,9 @@
 import React, { useMemo, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, MapPin, Star, Clock, Navigation } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
+import { api } from '../lib/axios';
 import { fetchGasStationsPaginated, getPhotoUrl, calculateDistanceMiles } from '../lib/overpass';
 import { TiltCard } from '../components/CursorEffects';
 
@@ -31,6 +32,26 @@ export default function StationAll() {
     const withDistance = all.map(station => ({ ...station, distanceMiles: calculateDistanceMiles(lat, lon, station.lat, station.lon) }));
     return withDistance.sort((a, b) => a.distanceMiles - b.distanceMiles);
   }, [data, lat, lon, activeFilter]);
+
+  // Fetch Regular 87 prices for the listed stations
+  const { data: stationPrices } = useQuery({
+    queryKey: ['all-station-prices', stations.map(s => s.id).sort().join(',')],
+    queryFn: async () => {
+      const toFetch = stations.slice(0, 40);
+      const results = await Promise.allSettled(
+        toFetch.map(s => api.get(`/prices/by-place/${s.id}`).then(r => {
+          const fuelPrices = r.data?.data?.fuelPrices || [];
+          const price = fuelPrices.find((fp: any) => fp.type === 'REGULAR_UNLEADED')?.price || fuelPrices[0]?.price || 0;
+          return { id: s.id, price };
+        }))
+      );
+      const map: Record<string, number> = {};
+      results.forEach(r => { if (r.status === 'fulfilled' && r.value.price > 0) map[r.value.id] = r.value.price; });
+      return map;
+    },
+    enabled: stations.length > 0,
+    refetchInterval: 15000,
+  });
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -84,11 +105,12 @@ export default function StationAll() {
                         <MapPin size={48} className="text-primary" />
                       </div>
                     )}
-                    <div className={`absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md shadow-sm ${item.distanceMiles < 6.2 ? 'bg-avatarBg/90 border border-primary/20' : 'bg-info/10 border border-info/20'}`}>
-                      <Navigation size={12} className={item.distanceMiles < 6.2 ? 'text-primary' : 'text-info'} />
-                      <span className={`font-bold text-xs tracking-wide ${item.distanceMiles < 6.2 ? 'text-primary' : 'text-info'}`}>
-                        {item.distanceMiles.toFixed(1)} mi
-                      </span>
+                    <div className="absolute top-3 right-3 flex flex-col items-end px-3.5 py-2 rounded-xl bg-black/75 backdrop-blur-md shadow-md">
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-bold text-[16px] text-white tracking-tight">{stationPrices?.[item.id] ? `$${stationPrices[item.id].toFixed(2)}` : '—'}</span>
+                        <span className="font-medium text-[10px] text-white/70">/gal</span>
+                      </div>
+                      <span className="font-semibold text-[9px] text-white/60 uppercase tracking-wide">Regular 87</span>
                     </div>
                   </div>
                   <div className="flex flex-col flex-1 min-w-0 w-full px-1">
@@ -105,6 +127,10 @@ export default function StationAll() {
                         <span className={`font-bold text-[13px] ml-1.5 ${item.isOpen ? 'text-primary' : 'text-warning'}`}>
                           {item.isOpen === true ? 'Open' : item.isOpen === false ? 'Closed' : 'Unknown'}
                         </span>
+                      </div>
+                      <div className="flex items-center bg-surfaceMuted border border-border px-3 py-1.5 rounded-xl">
+                        <Navigation size={14} className="text-textMuted mr-1.5" />
+                        <span className="font-bold text-[13px] text-textPrimary">{item.distanceMiles.toFixed(1)} mi</span>
                       </div>
                     </div>
                   </div>

@@ -4,7 +4,7 @@ import { MapPin, Bell, TrendingDown, TrendingUp, BarChart2, Map, Users, Camera, 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/axios';
-import { fetchNearbyGasStations, getPhotoUrl, calculateDistanceMiles } from '../lib/overpass';
+import { fetchNearbyGasStations, getPhotoUrl, calculateDistanceMiles, buildShortAddress } from '../lib/overpass';
 import type { GasStationPlace } from '../lib/overpass';
 import { useLocationStore } from '../store/locationStore';
 import { useAuthStore } from '../store/authStore';
@@ -48,11 +48,17 @@ export default function Home() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            // Very simplified reverse geocoding fallback for web
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`);
+            // Reverse geocode and format as: building street, city, state, pin
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&addressdetails=1`);
             const data = await res.json();
-            // Use the full display name instead of trying to parse out just the city
-            const fullLocation = data.display_name || 'Unknown Location';
+            const a = data.address || {};
+            const fullLocation = buildShortAddress({
+              houseNumber: a.house_number,
+              street: a.road,
+              city: a.city || a.town || a.village || a.county,
+              state: a.state,
+              postcode: a.postcode,
+            }) || data.display_name || 'Unknown Location';
             setLocation(position.coords.latitude, position.coords.longitude, fullLocation);
           } catch (e) {
             setLocation(position.coords.latitude, position.coords.longitude, 'Location Found');
@@ -83,9 +89,9 @@ export default function Home() {
 
   // 2. Fetch prices for top 10 stations (Market Overview & Market Tab)
   const { data: stationsWithPrices, isLoading: pricesLoading } = useQuery({
-    queryKey: ['home-station-prices', stations.slice(0, 10).map(s => s.id).sort().join(',')],
+    queryKey: ['home-station-prices', stations.slice(0, 12).map(s => s.id).sort().join(',')],
     queryFn: async (): Promise<StationWithPrices[]> => {
-      const toFetch = stations.slice(0, 10);
+      const toFetch = stations.slice(0, 12);
       if (toFetch.length === 0) return [];
 
       const results = await Promise.allSettled(
@@ -146,6 +152,19 @@ export default function Home() {
     }));
 
     return { lowestPrice, highestPrice, lowestStation, highestStation, avgPrice, fuelBreakdown };
+  }, [stationsWithPrices]);
+
+  // 3c. Cheapest stations (Regular 87) sorted ascending — for Market Overview grid
+  const cheapestStations = useMemo(() => {
+    if (!stationsWithPrices) return [];
+    return stationsWithPrices
+      .map(sp => {
+        const price = sp.fuelPrices.find(fp => fp.type === 'REGULAR_UNLEADED')?.price || sp.fuelPrices[0]?.price || 0;
+        return { sp, price };
+      })
+      .filter(x => x.price > 0)
+      .sort((a, b) => a.price - b.price)
+      .slice(0, 12);
   }, [stationsWithPrices]);
 
   // 3b. Fetch community prices SEPARATELY via nearby spatial endpoint
@@ -240,7 +259,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ─── Price Stats Card ─── */}
+        {/* ─── Market Overview: Cheapest Stations (Regular 87) ─── */}
         <div className="reveal mb-8">
           <h2 className="font-heading font-bold text-xl text-textPrimary mb-4">{t('home.marketOverview') || 'Market Overview'}</h2>
           {isLoading ? (
@@ -248,70 +267,32 @@ export default function Home() {
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
               <p className="font-medium text-sm text-textMuted mt-3">{t('home.fetchingPrices')}</p>
             </div>
-          ) : priceStats?.lowestStation ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative stagger-children">
-              {/* Lowest Price */}
-              <SpotlightCard className="premium-card premium-card-hover animate-fade-in-up cursor-pointer" spotlightColor="rgb(var(--color-primary) / 0.06)">
-              <button onClick={() => navigate(`/station/${priceStats.lowestStation!.station.id}`)} className="p-5 flex flex-col text-left group w-full">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-avatarBg group-hover:scale-105 transition-transform">
-                    <TrendingDown size={22} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-xs text-textMuted uppercase tracking-wider">{t('home.lowestNearYou')}</p>
-                    <p className="font-bold text-sm text-textPrimary mt-0.5 truncate">{priceStats.lowestStation.station.name}</p>
-                  </div>
-                </div>
-                <div className="flex justify-between items-end mt-auto">
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-bold text-3xl text-textPrimary tracking-tight">${priceStats.lowestPrice.toFixed(2)}</span>
-                    <span className="font-medium text-sm text-textMuted">{t('home.perGal')}</span>
-                  </div>
-                  <ChevronRight size={20} className="text-textMuted/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                </div>
-              </button>
-              </SpotlightCard>
-
-              {/* Highest Price */}
-              <SpotlightCard className="premium-card premium-card-hover animate-fade-in-up cursor-pointer" spotlightColor="rgb(var(--color-warning) / 0.06)">
-              <button onClick={() => navigate(`/station/${priceStats.highestStation!.station.id}`)} className="p-5 flex flex-col text-left group w-full">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-warning/10 group-hover:scale-105 transition-transform">
-                    <TrendingUp size={22} className="text-warning" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-xs text-textMuted uppercase tracking-wider">{t('home.highestNearYou')}</p>
-                    <p className="font-bold text-sm text-textPrimary mt-0.5 truncate">{priceStats.highestStation!.station.name}</p>
-                  </div>
-                </div>
-                <div className="flex justify-between items-end mt-auto">
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-bold text-3xl text-textPrimary tracking-tight">${priceStats.highestPrice.toFixed(2)}</span>
-                    <span className="font-medium text-sm text-textMuted">{t('home.perGal')}</span>
-                  </div>
-                  <ChevronRight size={20} className="text-textMuted/30 group-hover:text-warning group-hover:translate-x-1 transition-all" />
-                </div>
-              </button>
-              </SpotlightCard>
-
-              {/* Average */}
-              <div className="premium-card p-5 flex flex-col animate-fade-in-up">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-surfaceMuted">
-                    <BarChart2 size={22} className="text-textSecondary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-xs text-textMuted uppercase tracking-wider">{t('home.localAverage')}</p>
-                    <p className="font-bold text-sm text-textMuted mt-0.5">{stationsWithPrices?.length || 0} {t('home.stationsAnalyzed')}</p>
-                  </div>
-                </div>
-                <div className="flex justify-between items-end mt-auto">
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-bold text-3xl text-textPrimary tracking-tight">${priceStats.avgPrice.toFixed(2)}</span>
-                    <span className="font-medium text-sm text-textMuted">{t('home.perGal')}</span>
-                  </div>
-                </div>
-              </div>
+          ) : cheapestStations.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 stagger-children">
+              {cheapestStations.map(({ sp, price }, idx) => {
+                const dist = lat && lon ? calculateDistanceMiles(lat, lon, sp.station.lat, sp.station.lon) : null;
+                return (
+                  <SpotlightCard key={sp.station.id} className="premium-card premium-card-hover animate-fade-in-up cursor-pointer" spotlightColor="rgb(var(--color-primary) / 0.06)">
+                    <button onClick={() => navigate(`/station/${sp.station.id}`)} className="p-4 flex flex-col text-left group w-full h-full">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-bold text-[11px] text-primary bg-avatarBg px-2.5 py-0.5 rounded-full">#{idx + 1} Cheapest</span>
+                        {dist !== null && (
+                          <div className="flex items-center text-textMuted">
+                            <Navigation size={11} className="mr-1" />
+                            <span className="font-medium text-[11px]">{dist.toFixed(1)} mi</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="font-bold text-sm text-textPrimary truncate">{sp.station.name}</p>
+                      {sp.station.address && <p className="font-medium text-[11px] text-textMuted truncate mb-3">{sp.station.address}</p>}
+                      <div className="flex items-baseline gap-1 mt-auto">
+                        <span className="font-bold text-2xl text-textPrimary tracking-tight">${price.toFixed(2)}</span>
+                        <span className="font-medium text-xs text-textMuted">{t('home.perGal')}</span>
+                      </div>
+                    </button>
+                  </SpotlightCard>
+                );
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center min-h-[150px]">
@@ -320,22 +301,6 @@ export default function Home() {
             </div>
           )}
         </div>
-
-        {/* ─── Fuel Type Breakdown Pills ─── */}
-        {priceStats?.fuelBreakdown && priceStats.fuelBreakdown.length > 0 && (
-          <div className="reveal mb-8">
-            <h2 className="font-heading font-bold text-lg text-textPrimary mb-3">Average by Fuel Type</h2>
-            <div className="flex flex-wrap gap-3">
-              {priceStats.fuelBreakdown.map((fuel) => (
-                <div key={fuel.type} className="premium-card rounded-xl px-4 py-2 flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: fuel.color }} />
-                  <span className="font-medium text-sm text-textSecondary">{fuel.label}</span>
-                  <span className="font-bold text-[15px] text-textPrimary ml-1">${fuel.avgPrice.toFixed(2)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* ─── Tabs: Market / Community ─── */}
         <div className="reveal flex bg-surfaceMuted rounded-2xl p-1 mb-5">

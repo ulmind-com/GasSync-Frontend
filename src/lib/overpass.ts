@@ -16,6 +16,22 @@ export interface GasStationPlace {
   types?: string[];
 }
 
+// ─── Short Address Formatter ───
+// Builds "building street, city, state, pin" — drops country / extra parts.
+export function buildShortAddress(parts: {
+  houseNumber?: string | null;
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postcode?: string | null;
+}): string {
+  const line1 = [parts.houseNumber, parts.street].filter(Boolean).join(' ').trim();
+  return [line1, parts.city, parts.state, parts.postcode]
+    .map((p) => (p || '').trim())
+    .filter(Boolean)
+    .join(', ');
+}
+
 // ─── Haversine Distance Calculator (miles) ───
 export function calculateDistanceMiles(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 3958.8; // Earth's radius in miles

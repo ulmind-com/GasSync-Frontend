@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { MapPin, Search, Sliders, ArrowLeft, Star, Navigation, Clock, Droplet, List, Check, X, Image as ImageIcon, LocateFixed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { fetchNearbyGasStations, getPhotoUrl, calculateDistanceMiles } from '../lib/overpass';
+import { fetchNearbyGasStations, getPhotoUrl, calculateDistanceMiles, buildShortAddress } from '../lib/overpass';
 import type { GasStationPlace } from '../lib/overpass';
+import { api } from '../lib/axios';
 import { useLocationStore } from '../store/locationStore';
 import { useThemeStore } from '../store/themeStore';
 
@@ -45,10 +46,17 @@ export default function MapScreen() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&addressdetails=1`);
             const data = await res.json();
-            const city = data.address?.city || data.address?.town || data.address?.village || 'Unknown Location';
-            setLocation(position.coords.latitude, position.coords.longitude, city);
+            const a = data.address || {};
+            const formatted = buildShortAddress({
+              houseNumber: a.house_number,
+              street: a.road,
+              city: a.city || a.town || a.village || a.county,
+              state: a.state,
+              postcode: a.postcode,
+            }) || data.display_name || 'Unknown Location';
+            setLocation(position.coords.latitude, position.coords.longitude, formatted);
           } catch (e) { setLocation(position.coords.latitude, position.coords.longitude, 'Location Found'); }
         },
         () => { setLocation(29.7604, -95.3698, 'Houston, TX'); }
@@ -92,6 +100,26 @@ export default function MapScreen() {
     if (activeFilter === 'car_wash') filtered = filtered.filter(s => s.types && s.types.includes('car_wash'));
     return filtered.sort((a, b) => calculateDistanceMiles(lat, lon, a.lat, a.lon) - calculateDistanceMiles(lat, lon, b.lat, b.lon));
   }, [nearbyStations, lat, lon, activeFilter]);
+
+  // Fetch Regular 87 prices for the nearby stations
+  const { data: stationPrices } = useQuery({
+    queryKey: ['map-station-prices', stations.slice(0, 20).map(s => s.id).sort().join(',')],
+    queryFn: async () => {
+      const toFetch = stations.slice(0, 20);
+      const results = await Promise.allSettled(
+        toFetch.map(s => api.get(`/prices/by-place/${s.id}`).then(r => {
+          const fuelPrices = r.data?.data?.fuelPrices || [];
+          const price = fuelPrices.find((fp: any) => fp.type === 'REGULAR_UNLEADED')?.price || fuelPrices[0]?.price || 0;
+          return { id: s.id, price };
+        }))
+      );
+      const map: Record<string, number> = {};
+      results.forEach(r => { if (r.status === 'fulfilled' && r.value.price > 0) map[r.value.id] = r.value.price; });
+      return map;
+    },
+    enabled: stations.length > 0,
+    refetchInterval: 15000,
+  });
 
   if (lat === null || !isLoaded) {
     return (
@@ -160,12 +188,18 @@ export default function MapScreen() {
                     {item.photoRef ? <img src={getPhotoUrl(item.photoRef, 200)} alt={item.name} className="w-full h-full object-cover" /> : <MapPin size={20} className="text-primary" />}
                   </div>
                   <div className="flex flex-col flex-1 min-w-0">
-                    <h3 className="font-bold text-sm text-textPrimary truncate">{item.name}</h3>
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-bold text-sm text-textPrimary truncate">{item.name}</h3>
+                      {stationPrices?.[item.id] && (
+                        <span className="font-bold text-[12px] text-primary bg-avatarBg px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">${stationPrices[item.id].toFixed(2)}</span>
+                      )}
+                    </div>
                     {item.address && <p className="font-medium text-[11px] text-textMuted truncate mt-0.5">{item.address}</p>}
                     <div className="flex items-center gap-2 mt-auto pt-2">
                       <div className="flex items-center"><Star size={10} className="text-[#FFB800] fill-[#FFB800] mr-1" /><span className="font-bold text-[11px] text-textSecondary">{item.rating > 0 ? item.rating.toFixed(1) : 'New'}</span></div>
                       <span className="text-textMuted/30 text-[10px]">•</span>
                       <span className="font-medium text-[11px] text-textMuted">{calculateDistanceMiles(lat!, lon!, item.lat, item.lon).toFixed(1)} mi</span>
+                      {stationPrices?.[item.id] && <span className="font-medium text-[11px] text-primary ml-auto">Regular 87</span>}
                     </div>
                   </div>
                 </button>
