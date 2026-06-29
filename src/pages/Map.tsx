@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { useQuery } from '@tanstack/react-query';
-import { MapPin, Search, Sliders, ArrowLeft, Star, Navigation, Clock, Droplet, List, Check, X, Image as ImageIcon, LocateFixed } from 'lucide-react';
+import { MapPin, Search, Sliders, ArrowLeft, Star, Navigation, List, X, LocateFixed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchNearbyGasStations, getPhotoUrl, calculateDistanceMiles, buildShortAddress } from '../lib/overpass';
@@ -9,6 +9,7 @@ import type { GasStationPlace } from '../lib/overpass';
 import { api } from '../lib/axios';
 import { useLocationStore } from '../store/locationStore';
 import { useThemeStore } from '../store/themeStore';
+import FilterModal from '../components/FilterModal';
 
 const darkMapStyle = [
   { "elementType": "geometry", "stylers": [{ "color": "#212121" }] },
@@ -28,7 +29,7 @@ const darkMapStyle = [
 export default function MapScreen() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { lat, lon, setLocation, radiusMiles, setRadius, activeFilter, setFilter } = useLocationStore();
+  const { lat, lon, setLocation, radiusMiles, activeFilter, sortBy, selectedFuel } = useLocationStore();
   const { isDark } = useThemeStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,7 +102,7 @@ export default function MapScreen() {
     return filtered.sort((a, b) => calculateDistanceMiles(lat, lon, a.lat, a.lon) - calculateDistanceMiles(lat, lon, b.lat, b.lon));
   }, [nearbyStations, lat, lon, activeFilter]);
 
-  // Fetch Regular 87 prices for the nearby stations
+  // Fetch all fuel-type prices for the nearby stations
   const { data: stationPrices } = useQuery({
     queryKey: ['map-station-prices', stations.slice(0, 20).map(s => s.id).sort().join(',')],
     queryFn: async () => {
@@ -109,17 +110,31 @@ export default function MapScreen() {
       const results = await Promise.allSettled(
         toFetch.map(s => api.get(`/prices/by-place/${s.id}`).then(r => {
           const fuelPrices = r.data?.data?.fuelPrices || [];
-          const price = fuelPrices.find((fp: any) => fp.type === 'REGULAR_UNLEADED')?.price || fuelPrices[0]?.price || 0;
-          return { id: s.id, price };
+          const byType: Record<string, number> = {};
+          fuelPrices.forEach((fp: any) => { if (fp.price > 0) byType[fp.type] = fp.price; });
+          return { id: s.id, byType };
         }))
       );
-      const map: Record<string, number> = {};
-      results.forEach(r => { if (r.status === 'fulfilled' && r.value.price > 0) map[r.value.id] = r.value.price; });
+      const map: Record<string, Record<string, number>> = {};
+      results.forEach(r => { if (r.status === 'fulfilled') map[r.value.id] = r.value.byType; });
       return map;
     },
     enabled: stations.length > 0,
     refetchInterval: 15000,
   });
+
+  // Apply price sorting (selected fuel) when chosen; otherwise keep nearby order
+  const sortedStations = useMemo(() => {
+    if (sortBy === 'nearby' || !stationPrices) return stations;
+    return [...stations].sort((a, b) => {
+      const pa = stationPrices[a.id]?.[selectedFuel] ?? null;
+      const pb = stationPrices[b.id]?.[selectedFuel] ?? null;
+      if (pa == null && pb == null) return 0;
+      if (pa == null) return 1;
+      if (pb == null) return -1;
+      return sortBy === 'price_high' ? pb - pa : pa - pb;
+    });
+  }, [stations, stationPrices, selectedFuel, sortBy]);
 
   if (lat === null || !isLoaded) {
     return (
@@ -138,10 +153,15 @@ export default function MapScreen() {
           <div className="flex items-center justify-between mb-4">
             <button onClick={() => navigate(-1)} className="w-10 h-10 hover:bg-surfaceMuted rounded-full flex items-center justify-center text-textSecondary transition-colors"><ArrowLeft size={20} /></button>
             <h1 className="font-bold text-lg text-textPrimary">{t('map.title')}</h1>
-            <button onClick={() => setFilterModalVisible(true)} className="relative w-10 h-10 bg-surfaceMuted hover:bg-surfaceMuted/80 rounded-full flex items-center justify-center text-textPrimary transition-colors">
-              <Sliders size={18} className={activeFilter !== 'all' ? "text-primary" : ""} />
-              {activeFilter !== 'all' && <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-surface" />}
-            </button>
+            {(() => {
+              const filtersActive = activeFilter !== 'all' || sortBy !== 'nearby' || selectedFuel !== 'REGULAR_UNLEADED';
+              return (
+                <button onClick={() => setFilterModalVisible(true)} className="relative w-10 h-10 bg-surfaceMuted hover:bg-surfaceMuted/80 rounded-full flex items-center justify-center text-textPrimary transition-colors">
+                  <Sliders size={18} className={filtersActive ? "text-primary" : ""} />
+                  {filtersActive && <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-surface" />}
+                </button>
+              );
+            })()}
           </div>
 
           <div className="relative">
@@ -167,7 +187,7 @@ export default function MapScreen() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-surfaceMuted/50 p-4 shrink-0">
+        <div className="flex-1 min-h-0 overflow-y-auto bg-surfaceMuted/50 p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-base text-textPrimary">{t('map.nearbyStations')}</h2>
             <div className="flex items-center gap-3">
@@ -180,7 +200,7 @@ export default function MapScreen() {
             <div className="flex justify-center mt-8"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
           ) : stations.length > 0 ? (
             <div className="flex flex-col gap-3">
-              {stations.map((item) => (
+              {sortedStations.map((item) => (
                 <button key={item.id} onClick={() => navigate(`/station/${item.id}`)}
                   className={`premium-card p-3 text-left flex gap-3 transition-all ${selectedStation?.id === item.id ? 'border-primary shadow-md' : 'hover:shadow-md hover:border-border-strong'}`}
                 >
@@ -190,8 +210,8 @@ export default function MapScreen() {
                   <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="font-bold text-sm text-textPrimary truncate">{item.name}</h3>
-                      {stationPrices?.[item.id] && (
-                        <span className="font-bold text-[12px] text-primary bg-avatarBg px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">${stationPrices[item.id].toFixed(2)}</span>
+                      {stationPrices?.[item.id]?.[selectedFuel] && (
+                        <span className="font-bold text-[12px] text-primary bg-avatarBg px-2 py-0.5 rounded-md shrink-0 whitespace-nowrap">${stationPrices[item.id][selectedFuel].toFixed(2)}</span>
                       )}
                     </div>
                     {item.address && <p className="font-medium text-[11px] text-textMuted truncate mt-0.5">{item.address}</p>}
@@ -253,46 +273,7 @@ export default function MapScreen() {
           </div>
         )}
 
-        {filterModalVisible && (
-          <div className="fixed inset-0 premium-modal-backdrop z-[110] flex items-end justify-center sm:items-center">
-            <div className="premium-modal w-full sm:w-[400px] p-5 pb-10 sm:pb-5">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="font-bold text-xl text-textPrimary">{t('map.filterStations') || 'Filter Stations'}</h2>
-                <button onClick={() => setFilterModalVisible(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-surfaceMuted text-textMuted"><X size={18} /></button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-base text-textPrimary mb-3">{t('map.searchRadius') || 'Search Radius'}</h3>
-                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                    {[1, 5, 10, 20, 50].map((r) => (
-                      <button key={r} onClick={() => setRadius(r)} className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap border transition-colors ${radiusMiles === r ? 'bg-avatarBg border-primary text-primary' : 'bg-surface border-border text-textSecondary'}`}>{r} {t('map.miles') || 'miles'}</button>
-                    ))}
-                  </div>
-                </div>
-                <div className="h-px bg-border w-full my-4" />
-                <div>
-                  <h3 className="font-semibold text-base text-textPrimary mb-3">{t('map.stationFeatures') || 'Station Features'}</h3>
-                  <div className="flex flex-col gap-2">
-                    {[
-                      { key: 'all', icon: <List size={18} />, label: t('map.allStations') || 'All Stations' },
-                      { key: 'open', icon: <Clock size={18} />, label: t('map.openNow') || 'Open Now' },
-                      { key: 'top_rated', icon: <Star size={18} />, label: t('map.topRated') || 'Top Rated (4.0+)' },
-                      { key: 'car_wash', icon: <Droplet size={18} />, label: t('map.hasCarWash') || 'Has Car Wash' },
-                    ].map((f) => (
-                      <button key={f.key} onClick={() => { setFilter(f.key as any); setFilterModalVisible(false); }}
-                        className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${activeFilter === f.key ? 'border-primary bg-avatarBg' : 'border-border bg-surface'}`}
-                      >
-                        <span className={activeFilter === f.key ? "text-primary" : "text-textMuted"}>{f.icon}</span>
-                        <span className={`font-medium text-sm flex-1 text-left ${activeFilter === f.key ? "text-primary" : "text-textSecondary"}`}>{f.label}</span>
-                        {activeFilter === f.key && <Check size={18} className="text-primary" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <FilterModal open={filterModalVisible} onClose={() => setFilterModalVisible(false)} />
       </div>
     </div>
   );

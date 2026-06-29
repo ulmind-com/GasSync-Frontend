@@ -1,16 +1,18 @@
-import React, { useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useMemo, useEffect, useRef, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, MapPin, Star, Clock, Navigation } from 'lucide-react';
+import { ArrowLeft, MapPin, Star, Clock, Navigation, Sliders } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import { api } from '../lib/axios';
 import { fetchGasStationsPaginated, getPhotoUrl, calculateDistanceMiles } from '../lib/overpass';
 import { TiltCard } from '../components/CursorEffects';
+import FilterModal from '../components/FilterModal';
 
 export default function StationAll() {
   const navigate = useNavigate();
-  const { lat, lon, radiusMiles, activeFilter } = useLocationStore();
+  const { lat, lon, radiusMiles, activeFilter, sortBy, selectedFuel } = useLocationStore();
   const observerTarget = useRef<HTMLDivElement>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery({
     queryKey: ['all-stations-paginated', lat, lon, radiusMiles],
@@ -33,7 +35,7 @@ export default function StationAll() {
     return withDistance.sort((a, b) => a.distanceMiles - b.distanceMiles);
   }, [data, lat, lon, activeFilter]);
 
-  // Fetch Regular 87 prices for the listed stations
+  // Fetch all fuel-type prices for the listed stations
   const { data: stationPrices } = useQuery({
     queryKey: ['all-station-prices', stations.map(s => s.id).sort().join(',')],
     queryFn: async () => {
@@ -41,17 +43,31 @@ export default function StationAll() {
       const results = await Promise.allSettled(
         toFetch.map(s => api.get(`/prices/by-place/${s.id}`).then(r => {
           const fuelPrices = r.data?.data?.fuelPrices || [];
-          const price = fuelPrices.find((fp: any) => fp.type === 'REGULAR_UNLEADED')?.price || fuelPrices[0]?.price || 0;
-          return { id: s.id, price };
+          const byType: Record<string, number> = {};
+          fuelPrices.forEach((fp: any) => { if (fp.price > 0) byType[fp.type] = fp.price; });
+          return { id: s.id, byType };
         }))
       );
-      const map: Record<string, number> = {};
-      results.forEach(r => { if (r.status === 'fulfilled' && r.value.price > 0) map[r.value.id] = r.value.price; });
+      const map: Record<string, Record<string, number>> = {};
+      results.forEach(r => { if (r.status === 'fulfilled') map[r.value.id] = r.value.byType; });
       return map;
     },
     enabled: stations.length > 0,
     refetchInterval: 15000,
   });
+
+  // Default nearby order; sort by selected fuel price when chosen
+  const sortedStations = useMemo(() => {
+    if (sortBy === 'nearby' || !stationPrices) return stations;
+    return [...stations].sort((a, b) => {
+      const pa = stationPrices[a.id]?.[selectedFuel] ?? null;
+      const pb = stationPrices[b.id]?.[selectedFuel] ?? null;
+      if (pa == null && pb == null) return a.distanceMiles - b.distanceMiles;
+      if (pa == null) return 1;
+      if (pb == null) return -1;
+      return sortBy === 'price_high' ? pb - pa : pa - pb;
+    });
+  }, [stations, stationPrices, selectedFuel, sortBy]);
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -72,7 +88,15 @@ export default function StationAll() {
           <h1 className="font-bold text-2xl text-textPrimary tracking-tight">Gas Stations</h1>
           <p className="font-bold text-[13px] text-primary mt-0.5 bg-avatarBg px-3 py-1 rounded-full">{radiusMiles} Miles Radius • {stations.length} found</p>
         </div>
-        <div className="w-12 h-12" />
+        {(() => {
+          const filtersActive = activeFilter !== 'all' || sortBy !== 'nearby' || selectedFuel !== 'REGULAR_UNLEADED';
+          return (
+            <button onClick={() => setFilterOpen(true)} className="relative w-12 h-12 bg-surface rounded-full flex items-center justify-center shadow-premium-sm border border-border text-textPrimary hover:bg-surfaceMuted hover:scale-105 active:scale-95 transition-all">
+              <Sliders size={20} className={filtersActive ? 'text-primary' : ''} />
+              {filtersActive && <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-surface" />}
+            </button>
+          );
+        })()}
       </div>
 
       <div className="px-4 sm:px-6 lg:px-8 pt-4">
@@ -89,7 +113,7 @@ export default function StationAll() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger-children">
-              {stations.map((item, idx) => (
+              {sortedStations.map((item, idx) => (
                 <TiltCard
                   key={`${item.id}-${idx}`}
                   className="reveal premium-card overflow-hidden"
@@ -106,7 +130,7 @@ export default function StationAll() {
                       </div>
                     )}
                     <div className="absolute top-3 right-3 flex items-baseline gap-1 px-3.5 py-2 rounded-xl bg-black/75 backdrop-blur-md shadow-md">
-                      <span className="font-bold text-[16px] text-white tracking-tight">{stationPrices?.[item.id] ? `$${stationPrices[item.id].toFixed(2)}` : '—'}</span>
+                      <span className="font-bold text-[16px] text-white tracking-tight">{stationPrices?.[item.id]?.[selectedFuel] ? `$${stationPrices[item.id][selectedFuel].toFixed(2)}` : '—'}</span>
                       <span className="font-medium text-[10px] text-white/70">/gal</span>
                     </div>
                   </div>
@@ -148,6 +172,8 @@ export default function StationAll() {
           </>
         )}
       </div>
+
+      <FilterModal open={filterOpen} onClose={() => setFilterOpen(false)} />
     </div>
   );
 }
