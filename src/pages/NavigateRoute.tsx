@@ -4,7 +4,7 @@ import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, MapPin, ExternalLink, Loader2, Clock, Navigation, X } from 'lucide-react';
 import { getPlaceDetails, getRoute, type GasStationPlace, type RouteResult } from '../lib/overpass';
-import { buildRoutePath, locateAlongRoute, smoothHeading, snapToRoute, type LatLng } from '../lib/geo';
+import { buildRoutePath, locateAlongRoute, smoothHeading, snapToRoute, haversine, bearing, type LatLng } from '../lib/geo';
 import { useLocationStore } from '../store/locationStore';
 import { useThemeStore } from '../store/themeStore';
 
@@ -195,13 +195,12 @@ export default function NavigateRoute() {
   }, [route]);
 
   // ─── Drive the vehicle along the route, Google-Maps style ───
-  // Two sources feed a single "distance travelled along the route" value:
-  //   • Real GPS (navigator.geolocation.watchPosition) when the user is
-  //     actually on the route — the navigator follows YOU in real time.
-  //   • A simulated speed, only as a fallback when the origin was faked
-  //     because the real location is far from the station (demo data).
-  // A RAF loop renders that value smoothly: it advances the simulation and
-  // glides the marker between the ~1 Hz GPS fixes so motion stays fluid.
+  // The marker tracks a live target position + heading and a RAF loop glides
+  // the displayed marker/camera toward it so motion stays buttery smooth.
+  //   • Real GPS (watchPosition): the navigator follows YOUR actual location
+  //     in real time — snapped to the route when close, raw position when not.
+  //   • Simulation: only a fallback when the origin was faked because the real
+  //     location is far from the station (demo data in another region).
   useEffect(() => {
     if (!isNavigating || !routePath || !map || !route) return;
 
@@ -212,26 +211,52 @@ export default function NavigateRoute() {
     const simSpeed = Math.max(MIN_SPEED_MPS, avgSpeed) * NAV_SPEED_MULTIPLIER;
 
     const start = locateAlongRoute(routePath, 0);
-    setVehicle({ lat: start.lat, lng: start.lng });
-    let smoothedHeading = start.heading;
-    map.moveCamera({ center: { lat: start.lat, lng: start.lng }, zoom: 18, tilt: 55, heading: smoothedHeading });
 
-    let displayTravelled = 0; // metres actually shown on screen
-    let targetTravelled = 0;  // metres reported by GPS / simulation
+    // Shared live state the RAF loop renders toward.
+    let curPos: LatLng = { lat: start.lat, lng: start.lng };   // smoothed, on screen
+    let targetPos: LatLng = { lat: start.lat, lng: start.lng }; // latest GPS / sim point
+    let targetHeading = start.heading;
+    let smoothedHeading = start.heading;
+    let simTravelled = 0;
+    let lastRaw: LatLng | null = null;
     let watchId: number | null = null;
+
+    setVehicle(curPos);
+    map.moveCamera({ center: curPos, zoom: 18, tilt: 55, heading: smoothedHeading });
 
     if (useGps) {
       watchId = navigator.geolocation.watchPosition(
         (pos) => {
-          const snap = snapToRoute(routePath, {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          });
-          // Ignore wildly off-route fixes (GPS noise / user not on the road).
-          if (snap.offset <= 200) targetTravelled = snap.distanceAlong;
+          const raw: LatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          const snap = snapToRoute(routePath, raw);
+
+          // Snap to the road when we're close to it (clean look); otherwise
+          // show the real position so the marker NEVER freezes while moving.
+          targetPos = snap.offset <= 60 ? { lat: snap.lat, lng: snap.lng } : raw;
+
+          // Heading priority: device course while moving → GPS movement vector
+          // → the direction of the route segment we're on.
+          const gpsHeading = pos.coords.heading;
+          const speed = pos.coords.speed ?? 0;
+          if (typeof gpsHeading === 'number' && !Number.isNaN(gpsHeading) && speed > 0.7) {
+            targetHeading = gpsHeading;
+          } else if (lastRaw && haversine(lastRaw, raw) > 4) {
+            targetHeading = bearing(lastRaw, raw);
+          } else {
+            targetHeading = snap.heading;
+          }
+          lastRaw = raw;
+
+          const remaining = Math.max(0, routePath.total - snap.distanceAlong);
+          setRemainingMeters(remaining);
+          if (remaining < 25) {
+            setRemainingMeters(0);
+            setArrived(true);
+            setIsNavigating(false);
+          }
         },
         () => { /* keep last known position on transient GPS errors */ },
-        { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+        { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 }
       );
     }
 
@@ -242,27 +267,27 @@ export default function NavigateRoute() {
       const dt = Math.min((now - last) / 1000, 0.1); // clamp after tab/throttle stalls
       last = now;
 
-      if (useGps) {
-        // Glide toward the latest GPS fix so 1 Hz updates look continuous.
-        displayTravelled += (targetTravelled - displayTravelled) * (1 - Math.exp(-dt / 0.6));
-      } else {
-        targetTravelled = Math.min(targetTravelled + simSpeed * dt, routePath.total);
-        displayTravelled = targetTravelled;
+      if (!useGps) {
+        // Simulation: advance along the route and follow that point.
+        simTravelled = Math.min(simTravelled + simSpeed * dt, routePath.total);
+        const p = locateAlongRoute(routePath, simTravelled);
+        targetPos = { lat: p.lat, lng: p.lng };
+        targetHeading = p.heading;
+        setRemainingMeters(routePath.total - simTravelled);
       }
-      displayTravelled = Math.max(0, Math.min(displayTravelled, routePath.total));
 
-      const pos = locateAlongRoute(routePath, displayTravelled);
-      setVehicle({ lat: pos.lat, lng: pos.lng });
-      setRemainingMeters(routePath.total - displayTravelled);
+      // Glide the on-screen marker/camera toward the live target.
+      const k = 1 - Math.exp(-dt / 0.45);
+      curPos = {
+        lat: curPos.lat + (targetPos.lat - curPos.lat) * k,
+        lng: curPos.lng + (targetPos.lng - curPos.lng) * k,
+      };
+      smoothedHeading = smoothHeading(smoothedHeading, targetHeading, 0.12);
 
-      // Ease the camera heading so turns rotate smoothly rather than snapping.
-      smoothedHeading = smoothHeading(smoothedHeading, pos.heading, 0.12);
-      map.moveCamera({ center: { lat: pos.lat, lng: pos.lng }, zoom: 18, tilt: 55, heading: smoothedHeading });
+      setVehicle(curPos);
+      map.moveCamera({ center: curPos, zoom: 18, tilt: 55, heading: smoothedHeading });
 
-      const arrivedNow = useGps
-        ? routePath.total - displayTravelled < 20 && routePath.total - targetTravelled < 20
-        : displayTravelled >= routePath.total;
-      if (arrivedNow) {
+      if (!useGps && simTravelled >= routePath.total) {
         setRemainingMeters(0);
         setArrived(true);
         setIsNavigating(false);
