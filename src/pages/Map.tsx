@@ -267,7 +267,7 @@ export default function MapScreen() {
             <Marker position={{ lat, lng: lon }} icon={{ url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="%23208AEF" stroke="white" stroke-width="3"/></svg>', scaledSize: new google.maps.Size(24, 24) }} zIndex={999} />
           )}
           {stations.map((station) => (
-            <Marker key={station.id} position={{ lat: station.lat, lng: station.lon }} onClick={() => { setSelectedStation(station); map?.panTo({ lat: station.lat, lng: station.lon }); }}
+            <Marker key={station.id} position={{ lat: station.lat, lng: station.lon }} onClick={() => navigate(`/station/${station.id}`)}
               icon={{ url: station.photoRef ? getPhotoUrl(station.photoRef, 100) : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%2334C759"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>',
                 scaledSize: station.photoRef ? new google.maps.Size(40, 30) : new google.maps.Size(32, 32) }}
             />
