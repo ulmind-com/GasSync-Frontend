@@ -170,7 +170,7 @@ export default function MapScreen() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-120px)] premium-card overflow-hidden relative">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-136px)] premium-card overflow-hidden relative">
       {/* Left Panel */}
       <div className="w-full md:w-[400px] lg:w-[450px] flex flex-col h-full bg-surface z-10 shrink-0 border-r border-border">
         <div className="p-4 border-b border-border bg-surface">
