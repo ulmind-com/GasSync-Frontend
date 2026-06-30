@@ -170,10 +170,10 @@ export async function fetchGasStationsPaginated(
 
     if (_cacheKey !== cacheKey || _cachedStations.length === 0) {
       const query = `
-        [out:json][timeout:15];
+        [out:json][timeout:25];
         (
-          node["amenity"="fuel"](around:${Math.min(radiusMeters, 50000)},${lat},${lon});
-          way["amenity"="fuel"](around:${Math.min(radiusMeters, 50000)},${lat},${lon});
+          node["amenity"="fuel"](around:${Math.min(radiusMeters, 15000)},${lat},${lon});
+          way["amenity"="fuel"](around:${Math.min(radiusMeters, 15000)},${lat},${lon});
         );
         out center body;
       `;
@@ -183,7 +183,7 @@ export async function fetchGasStationsPaginated(
         `data=${encodeURIComponent(query)}`,
         {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          timeout: 15000,
+          timeout: 30000,
         }
       );
 
@@ -226,14 +226,14 @@ export async function searchGasStations(
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     const overpassQuery = `
-      [out:json][timeout:10];
+      [out:json][timeout:25];
       (
-        node["amenity"="fuel"]["name"~"${escapedQuery}",i](around:50000,${lat},${lon});
-        way["amenity"="fuel"]["name"~"${escapedQuery}",i](around:50000,${lat},${lon});
-        node["amenity"="fuel"]["brand"~"${escapedQuery}",i](around:50000,${lat},${lon});
-        way["amenity"="fuel"]["brand"~"${escapedQuery}",i](around:50000,${lat},${lon});
-        node["amenity"="fuel"]["operator"~"${escapedQuery}",i](around:50000,${lat},${lon});
-        way["amenity"="fuel"]["operator"~"${escapedQuery}",i](around:50000,${lat},${lon});
+        node["amenity"="fuel"]["name"~"${escapedQuery}",i](around:20000,${lat},${lon});
+        way["amenity"="fuel"]["name"~"${escapedQuery}",i](around:20000,${lat},${lon});
+        node["amenity"="fuel"]["brand"~"${escapedQuery}",i](around:20000,${lat},${lon});
+        way["amenity"="fuel"]["brand"~"${escapedQuery}",i](around:20000,${lat},${lon});
+        node["amenity"="fuel"]["operator"~"${escapedQuery}",i](around:20000,${lat},${lon});
+        way["amenity"="fuel"]["operator"~"${escapedQuery}",i](around:20000,${lat},${lon});
       );
       out center body;
     `;
@@ -243,7 +243,7 @@ export async function searchGasStations(
       `data=${encodeURIComponent(overpassQuery)}`,
       {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        timeout: 12000,
+        timeout: 30000,
       }
     );
 
