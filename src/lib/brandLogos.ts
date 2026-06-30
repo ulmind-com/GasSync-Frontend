@@ -83,8 +83,8 @@ const BRAND_LOGOS: Record<string, string> = {
   'mol': 'https://logo.clearbit.com/mol.hu',
 };
 
-// Default fallback image for unknown brands (High quality Unsplash gas station photo)
-const DEFAULT_FUEL_ICON = 'https://images.unsplash.com/photo-1545089309-84d728511d73?auto=format&fit=crop&q=80&w=800';
+// Reliable default for unknown brands (icons8 — Clearbit/Unsplash links died).
+const DEFAULT_FUEL_ICON = 'https://img.icons8.com/fluency/240/gas-station.png';
 
 /**
  * Detect the brand from a station name.
@@ -110,7 +110,11 @@ export function detectBrand(stationName: string): string | null {
  */
 export function getBrandLogoUrl(stationName: string): string {
   const brand = detectBrand(stationName);
-  return brand ? BRAND_LOGOS[brand] : DEFAULT_FUEL_ICON;
+  if (!brand) return DEFAULT_FUEL_ICON;
+  // BRAND_LOGOS values are "https://logo.clearbit.com/<domain>" (Clearbit is dead);
+  // reuse the domain with Google's favicon service — free + reliable.
+  const domain = BRAND_LOGOS[brand].split('/').pop();
+  return domain ? `https://www.google.com/s2/favicons?sz=128&domain=${domain}` : DEFAULT_FUEL_ICON;
 }
 
 /**
