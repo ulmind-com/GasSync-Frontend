@@ -28,6 +28,17 @@ const FUEL_TYPE_MAP: Record<string, { label: string }> = {
   e85: { label: 'E85 Flex' }, unl88: { label: 'UNL 88' },
 };
 
+// Display order for fuel grades: Regular 87 first, then the rest
+const FUEL_ORDER: Record<string, number> = {
+  REGULAR_UNLEADED: 0, regular: 0,
+  MIDGRADE: 1, midgrade: 1,
+  PREMIUM: 2, premium: 2,
+  DIESEL: 3, diesel: 3,
+  E85: 4, e85: 4,
+  UNL88: 5, unl88: 5,
+};
+const fuelRank = (type: string) => (FUEL_ORDER[type] ?? 99);
+
 const AMENITY_MAP: Record<string, { icon: React.ReactNode, label: string }> = {
   car_wash: { icon: <Droplet size={22} />, label: 'Car Wash' },
   convenience_store: { icon: <ShoppingBag size={22} />, label: 'Store' },
@@ -318,7 +329,7 @@ export default function StationDetails() {
             {priceTab === 'market' ? (
               priceData?.fuelPrices && priceData.fuelPrices.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {priceData.fuelPrices.map((fp: any, idx: number) => {
+                  {[...priceData.fuelPrices].sort((a: any, b: any) => fuelRank(a.type) - fuelRank(b.type)).map((fp: any, idx: number) => {
                     const mapped = FUEL_TYPE_MAP[fp.type] || { label: fp.type };
                     return (
                       <div key={idx} className="flex premium-card overflow-hidden">
