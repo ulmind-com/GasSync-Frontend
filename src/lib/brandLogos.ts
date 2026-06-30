@@ -58,6 +58,7 @@ const BRAND_LOGOS: Record<string, string> = {
 
   // Indian Brands
   'indian oil': 'https://logo.clearbit.com/iocl.com',
+  'indianoil': 'https://logo.clearbit.com/iocl.com',
   'iocl': 'https://logo.clearbit.com/iocl.com',
   'hindustan petroleum': 'https://logo.clearbit.com/hindustanpetroleum.com',
   'hpcl': 'https://logo.clearbit.com/hindustanpetroleum.com',

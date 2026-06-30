@@ -172,8 +172,8 @@ export async function fetchGasStationsPaginated(
       const query = `
         [out:json][timeout:25];
         (
-          node["amenity"="fuel"](around:${Math.min(radiusMeters, 5000)},${lat},${lon});
-          way["amenity"="fuel"](around:${Math.min(radiusMeters, 5000)},${lat},${lon});
+          node["amenity"="fuel"](around:${Math.min(radiusMeters, 50000)},${lat},${lon});
+          way["amenity"="fuel"](around:${Math.min(radiusMeters, 50000)},${lat},${lon});
         );
         out center body;
       `;
