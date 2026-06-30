@@ -74,7 +74,7 @@ export default function Home() {
       if (toFetch.length === 0) return [];
 
       const results = await Promise.allSettled(
-        toFetch.map(s => api.get(`/prices/by-station?name=${encodeURIComponent(s.name)}&lat=${s.lat}&lon=${s.lon}&cacheOnly=1`).then(r => ({
+        toFetch.map(s => api.get(`/prices/by-station?name=${encodeURIComponent(s.name)}&lat=${s.lat}&lon=${s.lon}`).then(r => ({
           station: s,
           fuelPrices: r.data?.data?.fuelPrices || [],
           communityPrices: r.data?.data?.communityPrices || [],

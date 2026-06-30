@@ -123,7 +123,7 @@ export default function MapScreen() {
     queryFn: async () => {
       const toFetch = stations.slice(0, 20);
       const results = await Promise.allSettled(
-        toFetch.map(s => api.get(`/prices/by-station?name=${encodeURIComponent(s.name)}&lat=${s.lat}&lon=${s.lon}&cacheOnly=1`).then(r => {
+        toFetch.map(s => api.get(`/prices/by-station?name=${encodeURIComponent(s.name)}&lat=${s.lat}&lon=${s.lon}`).then(r => {
           const fuelPrices = r.data?.data?.fuelPrices || [];
           const byType: Record<string, number> = {};
           fuelPrices.forEach((fp: any) => { if (fp.price > 0) byType[fp.type] = fp.price; });
