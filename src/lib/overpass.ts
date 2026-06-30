@@ -172,8 +172,8 @@ export async function fetchGasStationsPaginated(
       const query = `
         [out:json][timeout:25];
         (
-          node["amenity"="fuel"](around:${Math.min(radiusMeters, 15000)},${lat},${lon});
-          way["amenity"="fuel"](around:${Math.min(radiusMeters, 15000)},${lat},${lon});
+          node["amenity"="fuel"](around:${Math.min(radiusMeters, 5000)},${lat},${lon});
+          way["amenity"="fuel"](around:${Math.min(radiusMeters, 5000)},${lat},${lon});
         );
         out center body;
       `;
@@ -184,7 +184,8 @@ export async function fetchGasStationsPaginated(
         {
           headers: { 
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
+            'Accept': '*/*',
+            'User-Agent': 'GasSyncApp/1.0'
           },
           timeout: 30000,
         }
@@ -247,7 +248,8 @@ export async function searchGasStations(
       {
         headers: { 
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json'
+          'Accept': '*/*',
+          'User-Agent': 'GasSyncApp/1.0'
         },
         timeout: 30000,
       }
