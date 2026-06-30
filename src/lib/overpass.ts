@@ -182,7 +182,10 @@ export async function fetchGasStationsPaginated(
         OVERPASS_API,
         `data=${encodeURIComponent(query)}`,
         {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+          },
           timeout: 30000,
         }
       );
@@ -242,7 +245,10 @@ export async function searchGasStations(
       OVERPASS_API,
       `data=${encodeURIComponent(overpassQuery)}`,
       {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
         timeout: 30000,
       }
     );
