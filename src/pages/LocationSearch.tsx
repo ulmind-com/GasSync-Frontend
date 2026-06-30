@@ -129,7 +129,7 @@ export default function LocationSearch() {
         </div>
 
         {predictions.length > 0 && (
-          <div className="premium-modal shadow-premium-lg mt-1 max-h-[300px] overflow-y-auto">
+          <div data-lenis-prevent className="premium-modal shadow-premium-lg mt-1 max-h-[300px] overflow-y-auto overscroll-contain">
             {predictions.map((item) => (
               <button key={item.place_id} onClick={() => handleSelectPlace(item)} className="w-full text-left px-4 py-3 border-b border-border last:border-b-0 hover:bg-surfaceMuted flex items-center transition-colors">
                 <div className="w-8 h-8 rounded-full bg-avatarBg flex items-center justify-center shrink-0 mr-3"><MapPin size={16} className="text-primary" /></div>

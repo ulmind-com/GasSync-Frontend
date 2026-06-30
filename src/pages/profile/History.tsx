@@ -98,7 +98,7 @@ export default function History() {
                 <button onClick={() => setSelectedBill(null)} className="w-10 h-10 flex items-center justify-center text-textPrimary bg-surfaceMuted hover:bg-surfaceMuted/80 rounded-full transition-colors"><X size={20} /></button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
+            <div data-lenis-prevent className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6">
               <div className={`flex items-center gap-4 bg-surfaceMuted p-4 rounded-2xl mb-6 ${selectedBill?.googlePlaceId ? 'cursor-pointer hover:bg-surfaceMuted/80 transition-colors' : ''}`} onClick={() => { if (selectedBill?.googlePlaceId) { setSelectedBill(null); navigate(`/station/${selectedBill.googlePlaceId}`); } }}>
                 <div className="w-10 h-10 bg-surface shadow-sm rounded-full flex items-center justify-center shrink-0"><MapPin size={18} className="text-primary" /></div>
                 <div className="flex-1"><span className="block font-semibold text-[15px] text-textPrimary">{selectedBill?.stationName || 'Unknown Station'}</span>{selectedBill?.googlePlaceId && <span className="block font-medium text-xs text-primary mt-0.5">{t('history.tapToViewStation', 'Tap to view station')} →</span>}</div>

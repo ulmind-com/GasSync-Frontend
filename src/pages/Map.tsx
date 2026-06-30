@@ -185,7 +185,7 @@ export default function MapScreen() {
               <input type="text" className="flex-1 bg-transparent outline-none ml-3 font-medium text-sm text-textPrimary placeholder:text-textMuted" placeholder={t('map.searchPlaceholder')} value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
             </div>
             {showSearchResults && (
-              <div className="absolute top-[60px] left-5 right-5 premium-modal shadow-premium-lg max-h-[60vh] overflow-y-auto overscroll-contain z-50">
+              <div data-lenis-prevent className="absolute top-[60px] left-5 right-5 premium-modal shadow-premium-lg max-h-[60vh] overflow-y-auto overscroll-contain z-50">
                 {searchResults.length > 0 ? (
                   searchResults.slice(0, 8).map((item) => (
                     <button key={item.id} className="w-full flex items-center px-4 py-3 border-b border-border hover:bg-surfaceMuted text-left" onClick={() => handleSelectSearchResult(item)}>
@@ -204,7 +204,7 @@ export default function MapScreen() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto bg-surfaceMuted/50 p-4">
+        <div data-lenis-prevent className="flex-1 min-h-0 overflow-y-auto bg-surfaceMuted/50 p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-base text-textPrimary">{t('map.nearbyStations')}</h2>
             <div className="flex items-center gap-3">

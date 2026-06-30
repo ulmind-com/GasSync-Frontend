@@ -76,7 +76,7 @@ export default function FilterModal({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 premium-modal-backdrop z-[110] flex items-end justify-center sm:items-center" onClick={commitAndClose}>
-      <div className="premium-modal w-full sm:w-[440px] max-h-[88vh] overflow-y-auto p-5 pb-10 sm:pb-5" onClick={(e) => e.stopPropagation()}>
+      <div data-lenis-prevent className="premium-modal w-full sm:w-[440px] max-h-[88vh] overflow-y-auto overscroll-contain p-5 pb-10 sm:pb-5" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-bold text-xl text-textPrimary">Filter &amp; Sort</h2>

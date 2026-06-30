@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Share2, Heart, Star, MapPin, Clock, Navigation, DollarSign, Image as ImageIcon, Droplet, ShoppingBag, Coffee, Zap, User, ThumbsUp, ThumbsDown, X, Maximize2, Fuel } from 'lucide-react';
@@ -77,6 +77,21 @@ export default function StationDetails() {
   const [selectedBill, setSelectedBill] = useState<any>(null);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [scrollY, setScrollY] = useState(0);
+
+  // Lock background page scroll while a modal is open so the wheel scrolls the
+  // modal content instead of the page behind it.
+  const isModalOpen = !!selectedBill || !!fullScreenImage;
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const { overflow, paddingRight } = document.body.style;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`;
+    return () => {
+      document.body.style.overflow = overflow;
+      document.body.style.paddingRight = paddingRight;
+    };
+  }, [isModalOpen]);
 
   const { data: station, isLoading, refetch: refetchStation } = useQuery({
     queryKey: ['station', id],
@@ -417,7 +432,7 @@ export default function StationDetails() {
                 <X size={18} />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5">
+            <div data-lenis-prevent className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5">
               <div className="flex items-center mb-8">
                 <div className="w-12 h-12 rounded-full bg-surfaceMuted flex items-center justify-center mr-4 overflow-hidden">
                   {selectedBill.reportedByAvatar ? (
