@@ -42,36 +42,71 @@ export default function Home() {
 
   useEffect(() => {
     if (lat !== null) return;
-    
-    // Simulate location fetching for Web (In reality, would use navigator.geolocation)
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            // Reverse geocode and format as: building street, city, state, pin
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&addressdetails=1`);
-            const data = await res.json();
-            const a = data.address || {};
-            const fullLocation = buildShortAddress({
-              houseNumber: a.house_number,
-              street: a.road,
-              city: a.city || a.town || a.village || a.county,
-              state: a.state,
-              postcode: a.postcode,
-            }) || data.display_name || 'Unknown Location';
-            setLocation(position.coords.latitude, position.coords.longitude, fullLocation);
-          } catch (e) {
-            setLocation(position.coords.latitude, position.coords.longitude, 'Location Found');
-          }
-        },
-        () => {
-          setLocation(29.7604, -95.3698, 'Houston, TX');
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    } else {
+
+    if (!("geolocation" in navigator)) {
       setLocation(29.7604, -95.3698, 'Houston, TX');
+      return;
     }
+
+    let cancelled = false;
+
+    const useHoustonFallback = () => {
+      if (cancelled) return;
+      setLocation(29.7604, -95.3698, 'Houston, TX');
+    };
+
+    const onSuccess = async (position: GeolocationPosition) => {
+      if (cancelled) return;
+      try {
+        // Reverse geocode and format as: building street, city, state, pin
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&addressdetails=1`);
+        const data = await res.json();
+        const a = data.address || {};
+        const fullLocation = buildShortAddress({
+          houseNumber: a.house_number,
+          street: a.road,
+          city: a.city || a.town || a.village || a.county,
+          state: a.state,
+          postcode: a.postcode,
+        }) || data.display_name || 'Unknown Location';
+        if (cancelled) return;
+        setLocation(position.coords.latitude, position.coords.longitude, fullLocation);
+      } catch (e) {
+        if (cancelled) return;
+        setLocation(position.coords.latitude, position.coords.longitude, 'Location Found');
+      }
+    };
+
+    const onError = (err: GeolocationPositionError, isRetry: boolean) => {
+      if (cancelled) return;
+      // Only drop to Houston when the user actually denied permission.
+      // Transient timeouts / position-unavailable get one relaxed retry first,
+      // otherwise a single slow fix would wrongly pin the user to Houston.
+      if (err.code === err.PERMISSION_DENIED) {
+        useHoustonFallback();
+        return;
+      }
+      if (!isRetry) {
+        navigator.geolocation.getCurrentPosition(
+          onSuccess,
+          (e) => onError(e, true),
+          { enableHighAccuracy: false, timeout: 20000, maximumAge: 5 * 60 * 1000 }
+        );
+        return;
+      }
+      useHoustonFallback();
+    };
+
+    // Low accuracy + allow a recent cached fix: city-level is enough for a gas
+    // finder and avoids the desktop high-accuracy timeouts that caused the
+    // intermittent Houston fallback even with permission granted.
+    navigator.geolocation.getCurrentPosition(
+      onSuccess,
+      (e) => onError(e, false),
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60 * 1000 }
+    );
+
+    return () => { cancelled = true; };
   }, [lat, setLocation]);
 
   // 1. Fetch nearby stations

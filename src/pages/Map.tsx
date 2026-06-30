@@ -44,26 +44,66 @@ export default function MapScreen() {
 
   useEffect(() => {
     if (lat !== null) return;
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&addressdetails=1`);
-            const data = await res.json();
-            const a = data.address || {};
-            const formatted = buildShortAddress({
-              houseNumber: a.house_number,
-              street: a.road,
-              city: a.city || a.town || a.village || a.county,
-              state: a.state,
-              postcode: a.postcode,
-            }) || data.display_name || 'Unknown Location';
-            setLocation(position.coords.latitude, position.coords.longitude, formatted);
-          } catch (e) { setLocation(position.coords.latitude, position.coords.longitude, 'Location Found'); }
-        },
-        () => { setLocation(29.7604, -95.3698, 'Houston, TX'); }
-      );
-    } else { setLocation(29.7604, -95.3698, 'Houston, TX'); }
+
+    if (!("geolocation" in navigator)) {
+      setLocation(29.7604, -95.3698, 'Houston, TX');
+      return;
+    }
+
+    let cancelled = false;
+
+    const useHoustonFallback = () => {
+      if (cancelled) return;
+      setLocation(29.7604, -95.3698, 'Houston, TX');
+    };
+
+    const onSuccess = async (position: GeolocationPosition) => {
+      if (cancelled) return;
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json&addressdetails=1`);
+        const data = await res.json();
+        const a = data.address || {};
+        const formatted = buildShortAddress({
+          houseNumber: a.house_number,
+          street: a.road,
+          city: a.city || a.town || a.village || a.county,
+          state: a.state,
+          postcode: a.postcode,
+        }) || data.display_name || 'Unknown Location';
+        if (cancelled) return;
+        setLocation(position.coords.latitude, position.coords.longitude, formatted);
+      } catch (e) {
+        if (cancelled) return;
+        setLocation(position.coords.latitude, position.coords.longitude, 'Location Found');
+      }
+    };
+
+    const onError = (err: GeolocationPositionError, isRetry: boolean) => {
+      if (cancelled) return;
+      // Only fall back to Houston on an actual permission denial. Transient
+      // timeouts / unavailable get one relaxed retry first.
+      if (err.code === err.PERMISSION_DENIED) {
+        useHoustonFallback();
+        return;
+      }
+      if (!isRetry) {
+        navigator.geolocation.getCurrentPosition(
+          onSuccess,
+          (e) => onError(e, true),
+          { enableHighAccuracy: false, timeout: 20000, maximumAge: 5 * 60 * 1000 }
+        );
+        return;
+      }
+      useHoustonFallback();
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      onSuccess,
+      (e) => onError(e, false),
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 60 * 1000 }
+    );
+
+    return () => { cancelled = true; };
   }, [lat, setLocation]);
 
   useEffect(() => {
