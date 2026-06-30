@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { api } from './axios';
+import { getStationImageUrl } from './brandLogos';
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCe6KCXl5MO1INT16N9I_kiMwXxwZHJc8o';
 const PLACES_BASE = '/maps-api/place';
@@ -68,8 +70,27 @@ export interface PaginatedPlacesResponse {
   nextPageToken?: string;
 }
 
+// Map a backend GasStation document → the app's GasStationPlace shape.
+// photoRef carries the brand-logo URL (DB stations have no Google photo).
+function mapDbStation(s: any): GasStationPlace {
+  const coords = s.location?.coordinates || [];
+  return {
+    id: String(s._id || s.id),
+    name: s.name,
+    lat: typeof s.lat === 'number' ? s.lat : coords[1],
+    lon: typeof s.lon === 'number' ? s.lon : coords[0],
+    address: s.address || [s.city, s.state, s.zipCode].filter(Boolean).join(', '),
+    rating: s.rating || 0,
+    totalRatings: s.totalRatings || 0,
+    isOpen: s.operatingHours?.is24Hours ? true : null,
+    photoRef: getStationImageUrl(s.name || s.brand || ''),
+    types: s.amenities || [],
+  };
+}
+
 /**
- * Fetch REAL nearby gas stations from Google Places API with Pagination
+ * Nearby gas stations — served from our own DB (OSM-imported). No paid Places call.
+ * One DB call returns everything in range, so there's no pagination token.
  */
 export async function fetchGasStationsPaginated(
   lat: number,
@@ -77,60 +98,22 @@ export async function fetchGasStationsPaginated(
   radiusMeters: number = 30000,
   pageToken?: string
 ): Promise<PaginatedPlacesResponse> {
+  if (pageToken) return { results: [], nextPageToken: undefined };
   try {
-    const params: any = {
-      key: GOOGLE_MAPS_API_KEY,
-    };
-
-    if (pageToken) {
-      params.pagetoken = pageToken;
-    } else {
-      params.location = `${lat},${lon}`;
-      // Rank strictly by distance (nearest-first). This guarantees results for a
-      // smaller radius are a subset of a larger one — the screens clip to the
-      // chosen radius client-side. (`radius` ranks by prominence and breaks that
-      // subset relationship, so we don't use it.)
-      params.rankby = 'distance';
-      params.type = 'gas_station';
-    }
-
-    const res = await axios.get(`${PLACES_BASE}/nearbysearch/json`, {
-      params,
-      timeout: 10000,
+    const res = await api.get('/stations/nearby', {
+      params: { lat, lng: lon, radius: radiusMeters / 1609.34, limit: 50 },
+      timeout: 15000,
     });
-
-    const results = res.data?.results || [];
-    const uniquePlaces = new Map<string, any>();
-    results.forEach((place: any) => {
-      if (!uniquePlaces.has(place.place_id)) {
-        uniquePlaces.set(place.place_id, place);
-      }
-    });
-
-    const mappedResults = Array.from(uniquePlaces.values()).map((place: any) => ({
-      id: place.place_id,
-      name: place.name,
-      lat: place.geometry.location.lat,
-      lon: place.geometry.location.lng,
-      address: place.vicinity || '',
-      rating: place.rating || 0,
-      totalRatings: place.user_ratings_total || 0,
-      isOpen: place.opening_hours?.open_now ?? null,
-      photoRef: place.photos?.[0]?.photo_reference || null,
-    }));
-
-    return {
-      results: mappedResults,
-      nextPageToken: res.data?.next_page_token,
-    };
+    const stations = res.data?.data || [];
+    return { results: stations.map(mapDbStation), nextPageToken: undefined };
   } catch (error) {
-    console.warn('Google Places API Pagination error:', error);
+    console.warn('DB nearby stations error:', error);
     return { results: [] };
   }
 }
 
 /**
- * Search gas stations by query text
+ * Search stations by name / brand / address — from our DB. Sorted nearest-first.
  */
 export async function searchGasStations(
   query: string,
@@ -138,38 +121,13 @@ export async function searchGasStations(
   lon: number
 ): Promise<GasStationPlace[]> {
   try {
-    const res = await axios.get(`${PLACES_BASE}/textsearch/json`, {
-      params: {
-        query: `${query} gas station`,
-        location: `${lat},${lon}`,
-        radius: 30000,
-        type: 'gas_station',
-        key: GOOGLE_MAPS_API_KEY,
-      },
-      timeout: 10000,
-    });
-
-    const results = res.data?.results || [];
-    const uniquePlaces = new Map<string, any>();
-    results.forEach((place: any) => {
-      if (!uniquePlaces.has(place.place_id)) {
-        uniquePlaces.set(place.place_id, place);
-      }
-    });
-
-    return Array.from(uniquePlaces.values()).map((place: any) => ({
-      id: place.place_id,
-      name: place.name,
-      lat: place.geometry.location.lat,
-      lon: place.geometry.location.lng,
-      address: place.formatted_address || place.vicinity || '',
-      rating: place.rating || 0,
-      totalRatings: place.user_ratings_total || 0,
-      isOpen: place.opening_hours?.open_now ?? null,
-      photoRef: place.photos?.[0]?.photo_reference || null,
-    }));
+    const res = await api.get('/stations/search', { params: { q: query, limit: 25 }, timeout: 12000 });
+    const stations: GasStationPlace[] = (res.data?.data || []).map(mapDbStation);
+    return stations.sort(
+      (a, b) => calculateDistanceMiles(lat, lon, a.lat, a.lon) - calculateDistanceMiles(lat, lon, b.lat, b.lon)
+    );
   } catch (error) {
-    console.warn('Google Places search error:', error);
+    console.warn('DB search error:', error);
     return [];
   }
 }
@@ -290,43 +248,26 @@ export async function getRoute(
 }
 
 /**
- * Get photo URL from photo_reference
+ * Photo URL. DB stations carry a brand-logo URL in photoRef, so pass full URLs
+ * through unchanged. (Falls back to the Places photo proxy for any legacy ref.)
  */
 export function getPhotoUrl(photoRef: string, maxWidth: number = 400): string {
+  if (!photoRef) return '';
+  if (/^https?:\/\//.test(photoRef)) return photoRef;
   return `${PLACES_BASE}/photo?maxwidth=${maxWidth}&photo_reference=${photoRef}&key=${GOOGLE_MAPS_API_KEY}`;
 }
 
 /**
- * Fetch details for a specific place by ID
+ * Fetch a single station's details from our DB by id.
  */
 export async function getPlaceDetails(placeId: string): Promise<GasStationPlace | null> {
   try {
-    const res = await axios.get(`${PLACES_BASE}/details/json`, {
-      params: {
-        place_id: placeId,
-        fields: 'place_id,name,geometry,vicinity,rating,user_ratings_total,opening_hours,photos,types',
-        key: GOOGLE_MAPS_API_KEY,
-      },
-      timeout: 10000,
-    });
-
-    const place = res.data?.result;
-    if (!place) return null;
-
-    return {
-      id: place.place_id,
-      name: place.name,
-      lat: place.geometry.location.lat,
-      lon: place.geometry.location.lng,
-      address: place.vicinity || '',
-      rating: place.rating || 0,
-      totalRatings: place.user_ratings_total || 0,
-      isOpen: place.opening_hours?.open_now ?? null,
-      photoRef: place.photos?.[0]?.photo_reference || null,
-      types: place.types || [],
-    };
+    const res = await api.get(`/stations/${placeId}`, { timeout: 12000 });
+    const s = res.data?.data;
+    if (!s) return null;
+    return mapDbStation(s);
   } catch (error) {
-    console.warn('Google Places details error:', error);
+    console.warn('DB station details error:', error);
     return null;
   }
 }
