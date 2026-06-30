@@ -17,10 +17,22 @@ export default function StationAll() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery({
     queryKey: ['all-stations-paginated', lat, lon, radiusMiles],
     queryFn: async ({ pageParam }) => {
-      if (pageParam) await new Promise(r => setTimeout(r, 1000));
+      // Google's next_page_token only becomes valid after a short delay; ~2s is
+      // needed or the follow-up request fails with INVALID_REQUEST and no more
+      // pages load (which made every radius cap out at the first 20 results).
+      if (pageParam) await new Promise(r => setTimeout(r, 2000));
       return fetchGasStationsPaginated(lat!, lon!, radiusMiles * 1609.34, pageParam as string | undefined);
     },
-    getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.nextPageToken) return undefined;
+      // Results are nearest-first; once the farthest station on this page is
+      // already beyond the chosen radius, every later page is too — stop.
+      if (lat && lon) {
+        const last = lastPage.results[lastPage.results.length - 1];
+        if (last && calculateDistanceMiles(lat, lon, last.lat, last.lon) > radiusMiles) return undefined;
+      }
+      return lastPage.nextPageToken;
+    },
     initialPageParam: undefined as string | undefined,
     enabled: !!lat,
   });
@@ -31,9 +43,18 @@ export default function StationAll() {
     if (activeFilter === 'open') all = all.filter(s => s.isOpen);
     else if (activeFilter === 'top_rated') all = all.filter(s => s.rating && s.rating >= 4.0);
     else if (activeFilter === 'car_wash') all = all.filter(s => s.types && s.types.includes('car_wash'));
-    const withDistance = all.map(station => ({ ...station, distanceMiles: calculateDistanceMiles(lat, lon, station.lat, station.lon) }));
+    const withDistance = all
+      .map(station => ({ ...station, distanceMiles: calculateDistanceMiles(lat, lon, station.lat, station.lon) }))
+      .filter(station => station.distanceMiles <= radiusMiles); // honor chosen radius
     return withDistance.sort((a, b) => a.distanceMiles - b.distanceMiles);
-  }, [data, lat, lon, activeFilter]);
+  }, [data, lat, lon, activeFilter, radiusMiles]);
+
+  // Eagerly pull the remaining pages (gating stops them once the chosen radius
+  // is covered, or at Google's 60-result cap) so the full list within the
+  // selected radius loads without the user having to scroll.
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Fetch all fuel-type prices for the listed stations
   const { data: stationPrices } = useQuery({

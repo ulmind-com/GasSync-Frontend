@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { useQuery } from '@tanstack/react-query';
 import { MapPin, Search, Sliders, ArrowLeft, Star, Navigation, List, X, LocateFixed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { fetchNearbyGasStations, getPhotoUrl, calculateDistanceMiles, buildShortAddress } from '../lib/overpass';
+import { fetchNearbyGasStations, searchGasStations, getPhotoUrl, calculateDistanceMiles, buildShortAddress } from '../lib/overpass';
 import type { GasStationPlace } from '../lib/overpass';
 import { api } from '../lib/axios';
 import { useLocationStore } from '../store/locationStore';
@@ -35,6 +35,7 @@ export default function MapScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<GasStationPlace[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [selectedStation, setSelectedStation] = useState<GasStationPlace | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
 
@@ -79,13 +80,35 @@ export default function MapScreen() {
     enabled: !!lat, staleTime: 60000,
   });
 
+  const searchSeq = useRef(0);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleSearch = useCallback((text: string) => {
     setSearchQuery(text);
-    if (text.length < 2) { setShowSearchResults(false); setSearchResults([]); return; }
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (text.length < 2) { setShowSearchResults(false); setSearchResults([]); setIsSearching(false); return; }
     setShowSearchResults(true);
-    if (nearbyStations) setSearchResults(nearbyStations.filter(s => s.name.toLowerCase().includes(text.toLowerCase())));
-    else setSearchResults([]);
-  }, [nearbyStations]);
+
+    const norm = (v: string) => (v || '').toLowerCase().replace(/[\s,]/g, '');
+    const q = norm(text);
+    const local = (nearbyStations || []).filter(s => norm(s.name).includes(q) || norm(s.address).includes(q));
+    setSearchResults(local);
+
+    // Nearby list is capped (~20 closest stations). If nothing matched locally,
+    // ask Google's text search directly so stations beyond that cap still show up.
+    if (local.length === 0 && lat && lon) {
+      setIsSearching(true);
+      const seq = ++searchSeq.current;
+      searchTimer.current = setTimeout(async () => {
+        const remote = await searchGasStations(text, lat, lon);
+        if (seq !== searchSeq.current) return; // a newer keystroke superseded this
+        setSearchResults(remote);
+        setIsSearching(false);
+      }, 350);
+    } else {
+      setIsSearching(false);
+    }
+  }, [nearbyStations, lat, lon]);
 
   const handleSelectSearchResult = (station: GasStationPlace) => {
     setShowSearchResults(false); setSearchQuery(station.name); setSelectedStation(station);
@@ -99,8 +122,9 @@ export default function MapScreen() {
     if (activeFilter === 'open') filtered = filtered.filter(s => s.isOpen);
     else if (activeFilter === 'top_rated') filtered = filtered.filter(s => s.rating && s.rating >= 4.0);
     if (activeFilter === 'car_wash') filtered = filtered.filter(s => s.types && s.types.includes('car_wash'));
+    filtered = filtered.filter(s => calculateDistanceMiles(lat, lon, s.lat, s.lon) <= radiusMiles); // honor chosen radius
     return filtered.sort((a, b) => calculateDistanceMiles(lat, lon, a.lat, a.lon) - calculateDistanceMiles(lat, lon, b.lat, b.lon));
-  }, [nearbyStations, lat, lon, activeFilter]);
+  }, [nearbyStations, lat, lon, activeFilter, radiusMiles]);
 
   // Fetch all fuel-type prices for the nearby stations
   const { data: stationPrices } = useQuery({
@@ -170,9 +194,9 @@ export default function MapScreen() {
               <input type="text" className="flex-1 bg-transparent outline-none ml-3 font-medium text-sm text-textPrimary placeholder:text-textMuted" placeholder={t('map.searchPlaceholder')} value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
             </div>
             {showSearchResults && (
-              <div className="absolute top-[60px] left-5 right-5 premium-modal shadow-premium-lg max-h-[250px] overflow-y-auto z-50">
+              <div className="absolute top-[60px] left-5 right-5 premium-modal shadow-premium-lg max-h-[320px] overflow-y-auto overscroll-contain z-50">
                 {searchResults.length > 0 ? (
-                  searchResults.slice(0, 5).map((item) => (
+                  searchResults.slice(0, 8).map((item) => (
                     <button key={item.id} className="w-full flex items-center px-4 py-3 border-b border-border hover:bg-surfaceMuted text-left" onClick={() => handleSelectSearchResult(item)}>
                       <div className="w-8 h-8 rounded-full bg-avatarBg flex items-center justify-center mr-3 shrink-0"><MapPin size={16} className="text-primary" /></div>
                       <div className="flex-1 min-w-0">
@@ -181,6 +205,8 @@ export default function MapScreen() {
                       </div>
                     </button>
                   ))
+                ) : isSearching ? (
+                  <p className="text-center text-[13px] text-textMuted py-4">{t('map.searchBtn')}…</p>
                 ) : ( <p className="text-center text-[13px] text-textMuted py-4">{t('map.noResults')}</p> )}
               </div>
             )}

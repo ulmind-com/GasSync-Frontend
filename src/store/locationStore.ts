@@ -22,7 +22,7 @@ export const useLocationStore = create<LocationState>((set) => ({
   lat: null,
   lon: null,
   name: 'Locating...',
-  radiusMiles: 15,
+  radiusMiles: 10,
   activeFilter: 'all',
   sortBy: 'nearby',
   selectedFuel: 'REGULAR_UNLEADED',

@@ -86,7 +86,11 @@ export async function fetchGasStationsPaginated(
       params.pagetoken = pageToken;
     } else {
       params.location = `${lat},${lon}`;
-      params.radius = radiusMeters;
+      // Rank strictly by distance (nearest-first). This guarantees results for a
+      // smaller radius are a subset of a larger one — the screens clip to the
+      // chosen radius client-side. (`radius` ranks by prominence and breaks that
+      // subset relationship, so we don't use it.)
+      params.rankby = 'distance';
       params.type = 'gas_station';
     }
 

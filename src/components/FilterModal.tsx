@@ -18,7 +18,7 @@ const SORT_OPTIONS: { key: SortBy; label: string; icon: React.ReactNode }[] = [
   { key: 'price_high', label: 'Price (High to Low)', icon: <TrendingUp size={18} /> },
 ];
 
-const RADII = [1, 5, 10, 20, 50];
+const RADII = [1, 5, 10, 20, 30];
 
 const FEATURES: { key: StationFilter; label: string; icon: React.ReactNode }[] = [
   { key: 'all', label: 'All Stations', icon: <List size={18} /> },
@@ -27,7 +27,7 @@ const FEATURES: { key: StationFilter; label: string; icon: React.ReactNode }[] =
   { key: 'car_wash', label: 'Has Car Wash', icon: <Droplet size={18} /> },
 ];
 
-const DEFAULTS = { sort: 'nearby' as SortBy, radius: 15, filter: 'all' as StationFilter, fuel: 'REGULAR_UNLEADED' };
+const DEFAULTS = { sort: 'nearby' as SortBy, radius: 10, filter: 'all' as StationFilter, fuel: 'REGULAR_UNLEADED' };
 
 interface Props {
   open: boolean;
