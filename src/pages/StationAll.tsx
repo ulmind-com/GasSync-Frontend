@@ -107,7 +107,7 @@ export default function StationAll() {
         </button>
         <div className="flex flex-col items-center">
           <h1 className="font-bold text-2xl text-textPrimary tracking-tight">Gas Stations</h1>
-          <p className="font-bold text-[13px] text-primary mt-0.5 bg-avatarBg px-3 py-1 rounded-full">{radiusMiles} Miles Radius • {stations.length} found</p>
+          <p className="font-bold text-[13px] text-primary mt-0.5 bg-avatarBg px-3 py-1 rounded-full">{radiusMiles} Miles Radius</p>
         </div>
         {(() => {
           const filtersActive = activeFilter !== 'all' || sortBy !== 'nearby' || selectedFuel !== 'REGULAR_UNLEADED';
