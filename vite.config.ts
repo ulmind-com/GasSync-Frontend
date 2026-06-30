@@ -12,16 +12,6 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/maps-api': {
-        target: 'https://maps.googleapis.com/maps/api',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/maps-api/, '')
-      },
-      '/routes-api': {
-        target: 'https://routes.googleapis.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/routes-api/, '')
-      },
       '/api/v1': {
         target: 'https://gassync-backend.onrender.com',
         changeOrigin: true

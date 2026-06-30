@@ -4,7 +4,8 @@ import { MapPin, Bell, TrendingDown, TrendingUp, BarChart2, Map, Users, Camera, 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { api } from '../lib/axios';
-import { fetchNearbyGasStations, getPhotoUrl, calculateDistanceMiles } from '../lib/overpass';
+import { fetchNearbyGasStations, calculateDistanceMiles } from '../lib/overpass';
+import { getStationImageUrl } from '../lib/brandLogos';
 import { resolveUserLocation } from '../lib/geolocation';
 import type { GasStationPlace } from '../lib/overpass';
 import { useLocationStore } from '../store/locationStore';
@@ -74,7 +75,7 @@ export default function Home() {
       if (toFetch.length === 0) return [];
 
       const results = await Promise.allSettled(
-        toFetch.map(s => api.get(`/prices/by-place/${s.id}`).then(r => ({
+        toFetch.map(s => api.get(`/prices/by-station?name=${encodeURIComponent(s.name)}&lat=${s.lat}&lon=${s.lon}`).then(r => ({
           station: s,
           fuelPrices: r.data?.data?.fuelPrices || [],
           communityPrices: r.data?.data?.communityPrices || [],
@@ -324,9 +325,9 @@ export default function Home() {
                       <div className="text-left flex flex-col group cursor-pointer">
                       <div className="w-full h-40 bg-surfaceMuted relative flex items-center justify-center overflow-hidden">
                         {item.photoRef ? (
-                          <img src={getPhotoUrl(item.photoRef, 400)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          <img src={getStationImageUrl(item.name, item.photoRef)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         ) : (
-                          <MapPin size={32} className="text-primary" />
+                          <img src={getStationImageUrl(item.name)} alt={item.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
                         )}
                         {regularPrice && (
                           <div className="absolute top-3 right-3 bg-black/70 px-3 py-1.5 rounded-lg backdrop-blur-md">

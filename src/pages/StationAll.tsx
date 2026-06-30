@@ -4,7 +4,8 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, MapPin, Star, Clock, Navigation, Sliders } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import { api } from '../lib/axios';
-import { fetchGasStationsPaginated, getPhotoUrl, calculateDistanceMiles } from '../lib/overpass';
+import { fetchGasStationsPaginated, calculateDistanceMiles } from '../lib/overpass';
+import { getStationImageUrl } from '../lib/brandLogos';
 import { TiltCard } from '../components/CursorEffects';
 import FilterModal from '../components/FilterModal';
 
@@ -16,24 +17,20 @@ export default function StationAll() {
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } = useInfiniteQuery({
     queryKey: ['all-stations-paginated', lat, lon, radiusMiles],
-    queryFn: async ({ pageParam }) => {
-      // Google's next_page_token only becomes valid after a short delay; ~2s is
-      // needed or the follow-up request fails with INVALID_REQUEST and no more
-      // pages load (which made every radius cap out at the first 20 results).
-      if (pageParam) await new Promise(r => setTimeout(r, 2000));
-      return fetchGasStationsPaginated(lat!, lon!, radiusMiles * 1609.34, pageParam as string | undefined);
+    queryFn: async ({ pageParam = 0 }) => {
+      return fetchGasStationsPaginated(lat!, lon!, radiusMiles * 1609.34, pageParam);
     },
-    getNextPageParam: (lastPage) => {
-      if (!lastPage.nextPageToken) return undefined;
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage.hasMore) return undefined;
       // Results are nearest-first; once the farthest station on this page is
       // already beyond the chosen radius, every later page is too — stop.
       if (lat && lon) {
         const last = lastPage.results[lastPage.results.length - 1];
         if (last && calculateDistanceMiles(lat, lon, last.lat, last.lon) > radiusMiles) return undefined;
       }
-      return lastPage.nextPageToken;
+      return allPages.length;
     },
-    initialPageParam: undefined as string | undefined,
+    initialPageParam: 0,
     enabled: !!lat,
   });
 
@@ -62,7 +59,7 @@ export default function StationAll() {
     queryFn: async () => {
       const toFetch = stations.slice(0, 40);
       const results = await Promise.allSettled(
-        toFetch.map(s => api.get(`/prices/by-place/${s.id}`).then(r => {
+        toFetch.map(s => api.get(`/prices/by-station?name=${encodeURIComponent(s.name)}&lat=${s.lat}&lon=${s.lon}`).then(r => {
           const fuelPrices = r.data?.data?.fuelPrices || [];
           const byType: Record<string, number> = {};
           fuelPrices.forEach((fp: any) => { if (fp.price > 0) byType[fp.type] = fp.price; });
@@ -144,11 +141,9 @@ export default function StationAll() {
                 <div className="p-4 flex flex-col text-left group relative cursor-pointer">
                   <div className="w-full h-[180px] rounded-[18px] bg-surfaceMuted shrink-0 overflow-hidden relative mb-4">
                     {item.photoRef ? (
-                      <img src={getPhotoUrl(item.photoRef, 400)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img src={getStationImageUrl(item.name, item.photoRef)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-avatarBg group-hover:scale-105 transition-transform duration-500">
-                        <MapPin size={48} className="text-primary" />
-                      </div>
+                      <img src={getStationImageUrl(item.name)} alt={item.name} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
                     )}
                     <div className="absolute top-3 right-3 flex items-baseline gap-1 px-3.5 py-2 rounded-xl bg-black/75 backdrop-blur-md shadow-md">
                       <span className="font-bold text-[16px] text-white tracking-tight">{stationPrices?.[item.id]?.[selectedFuel] ? `$${stationPrices[item.id][selectedFuel].toFixed(2)}` : '—'}</span>

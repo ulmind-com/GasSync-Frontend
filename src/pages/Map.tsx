@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { MapPin, Search, Sliders, ArrowLeft, Star, Navigation, List, X, LocateFixed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { fetchNearbyGasStations, searchGasStations, getPhotoUrl, calculateDistanceMiles } from '../lib/overpass';
+import { fetchNearbyGasStations, searchGasStations, calculateDistanceMiles } from '../lib/overpass';
+import { getStationImageUrl } from '../lib/brandLogos';
 import { resolveUserLocation } from '../lib/geolocation';
 import type { GasStationPlace } from '../lib/overpass';
 import { api } from '../lib/axios';
@@ -123,7 +124,7 @@ export default function MapScreen() {
     queryFn: async () => {
       const toFetch = stations.slice(0, 20);
       const results = await Promise.allSettled(
-        toFetch.map(s => api.get(`/prices/by-place/${s.id}`).then(r => {
+        toFetch.map(s => api.get(`/prices/by-station?name=${encodeURIComponent(s.name)}&lat=${s.lat}&lon=${s.lon}`).then(r => {
           const fuelPrices = r.data?.data?.fuelPrices || [];
           const byType: Record<string, number> = {};
           fuelPrices.forEach((fp: any) => { if (fp.price > 0) byType[fp.type] = fp.price; });
@@ -222,7 +223,7 @@ export default function MapScreen() {
                   className={`premium-card p-3 text-left flex gap-3 transition-all ${selectedStation?.id === item.id ? 'border-primary shadow-md' : 'hover:shadow-md hover:border-border-strong'}`}
                 >
                   <div className="w-[100px] h-[80px] bg-surfaceMuted rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                    {item.photoRef ? <img src={getPhotoUrl(item.photoRef, 200)} alt={item.name} className="w-full h-full object-cover" /> : <MapPin size={20} className="text-primary" />}
+                    {item.photoRef ? <img src={getStationImageUrl(item.name, item.photoRef)} alt={item.name} className="w-full h-full object-cover" /> : <img src={getStationImageUrl(item.name)} alt={item.name} className="w-full h-full object-contain p-2" />}
                   </div>
                   <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
@@ -257,8 +258,8 @@ export default function MapScreen() {
           )}
           {stations.map((station) => (
             <Marker key={station.id} position={{ lat: station.lat, lng: station.lon }} onClick={() => navigate(`/station/${station.id}`)}
-              icon={{ url: station.photoRef ? getPhotoUrl(station.photoRef, 100) : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%2334C759"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>',
-                scaledSize: station.photoRef ? new google.maps.Size(40, 30) : new google.maps.Size(32, 32) }}
+              icon={{ url: getStationImageUrl(station.name, station.photoRef ?? undefined),
+                      scaledSize: new window.google.maps.Size(40, 40) }}
             />
           ))}
         </GoogleMap>
@@ -284,7 +285,7 @@ export default function MapScreen() {
               </div>
             )}
             <div className="flex gap-3 mt-4">
-              <button onClick={() => navigate(`/navigate/${selectedStation.id}`)} className="flex-1 bg-info hover:brightness-110 transition-all text-white flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm shadow-sm"><Navigation size={16} />Navigate</button>
+              <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${selectedStation.lat},${selectedStation.lon}`, '_blank')} className="flex-1 bg-info hover:brightness-110 transition-all text-white flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm shadow-sm"><Navigation size={16} />Navigate</button>
               <button onClick={() => navigate(`/scanner?googlePlaceId=${selectedStation.id}&stationName=${encodeURIComponent(selectedStation.name || '')}`)} className="flex-1 btn-primary py-2.5 rounded-xl text-sm"><List size={16} />Report Price</button>
             </div>
           </div>
