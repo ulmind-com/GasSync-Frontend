@@ -82,8 +82,8 @@ const BRAND_LOGOS: Record<string, string> = {
   'mol': 'https://logo.clearbit.com/mol.hu',
 };
 
-// Default fallback icon for unknown brands
-const DEFAULT_FUEL_ICON = 'https://img.icons8.com/fluency/96/gas-station.png';
+// Default fallback image for unknown brands (High quality Unsplash gas station photo)
+const DEFAULT_FUEL_ICON = 'https://images.unsplash.com/photo-1545089309-84d728511d73?auto=format&fit=crop&q=80&w=800';
 
 /**
  * Detect the brand from a station name.

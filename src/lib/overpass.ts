@@ -118,7 +118,7 @@ function mapOsmToStation(element: any): GasStationPlace {
   const brand = tags.brand || tags.operator || '';
 
   return {
-    id: `${element.type}/${element.id}`,
+    id: `${element.type}_${element.id}`,
     name: tags.name || brand || 'Gas Station',
     lat,
     lon,
@@ -280,7 +280,8 @@ export function getPhotoUrl(_photoRef: string, _maxWidth: number = 400): string 
 
 export async function getPlaceDetails(placeId: string): Promise<GasStationPlace | null> {
   try {
-    const match = placeId.match(/^(node|way)\/(\d+)$/);
+    // Parse OSM ID format: "node_123456" or "way_789012"
+    const match = placeId.match(/^(node|way)_(\d+)$/);
     if (!match) {
       console.warn('getPlaceDetails: Not an OSM ID:', placeId);
       return null;
@@ -298,7 +299,11 @@ export async function getPlaceDetails(placeId: string): Promise<GasStationPlace 
       OVERPASS_API,
       `data=${encodeURIComponent(query)}`,
       {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': '*/*',
+          'User-Agent': 'GasSyncApp/1.0'
+        },
         timeout: 10000,
       }
     );
