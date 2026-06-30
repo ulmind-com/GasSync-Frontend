@@ -111,8 +111,10 @@ export default function MapScreen() {
   }, [nearbyStations, lat, lon]);
 
   const handleSelectSearchResult = (station: GasStationPlace) => {
-    setShowSearchResults(false); setSearchQuery(station.name); setSelectedStation(station);
-    if (map) { map.panTo({ lat: station.lat, lng: station.lon }); map.setZoom(15); }
+    // Match the app: tapping a search result opens that station's detail page.
+    setShowSearchResults(false);
+    setSearchQuery(station.name);
+    navigate(`/station/${station.id}`);
   };
 
   const stations = useMemo(() => {
@@ -194,7 +196,7 @@ export default function MapScreen() {
               <input type="text" className="flex-1 bg-transparent outline-none ml-3 font-medium text-sm text-textPrimary placeholder:text-textMuted" placeholder={t('map.searchPlaceholder')} value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
             </div>
             {showSearchResults && (
-              <div className="absolute top-[60px] left-5 right-5 premium-modal shadow-premium-lg max-h-[320px] overflow-y-auto overscroll-contain z-50">
+              <div className="absolute top-[60px] left-5 right-5 premium-modal shadow-premium-lg max-h-[60vh] overflow-y-auto overscroll-contain z-50">
                 {searchResults.length > 0 ? (
                   searchResults.slice(0, 8).map((item) => (
                     <button key={item.id} className="w-full flex items-center px-4 py-3 border-b border-border hover:bg-surfaceMuted text-left" onClick={() => handleSelectSearchResult(item)}>
