@@ -3,8 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Share2, Heart, Star, MapPin, Clock, Navigation, DollarSign, Image as ImageIcon, Droplet, ShoppingBag, Coffee, Zap, User, ThumbsUp, ThumbsDown, X, Maximize2, Fuel } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { getPlaceDetails } from '../lib/overpass';
-import { getStationImageUrl } from '../lib/brandLogos';
+import { getPlaceDetails, getPhotoUrl } from '../lib/overpass';
 import { api } from '../lib/axios';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
@@ -103,13 +102,8 @@ export default function StationDetails() {
   const { data: priceData, refetch: refetchPrices } = useQuery({
     queryKey: ['station-prices', id],
     queryFn: async () => {
-      if (station) {
-        const res = await api.get(`/prices/by-station?name=${encodeURIComponent(station.name)}&lat=${station.lat}&lon=${station.lon}`);
-        return res.data?.data;
-      } else {
-        const res = await api.get(`/prices/by-place/${id}`);
-        return res.data?.data;
-      }
+      const res = await api.get(`/prices/by-place/${id}`);
+      return res.data?.data;
     },
     enabled: !!id,
     staleTime: 1000 * 60 * 60,
@@ -212,9 +206,11 @@ export default function StationDetails() {
         </div>
 
         {station.photoRef ? (
-          <img src={getStationImageUrl(station.name, station.photoRef)} alt={station.name} className="w-full h-full object-cover" />
+          <img src={getPhotoUrl(station.photoRef, 1200)} alt={station.name} className="w-full h-full object-cover" />
         ) : (
-          <img src={getStationImageUrl(station.name)} alt={station.name} className="w-full h-full object-contain p-8" />
+          <div className="w-full h-full bg-avatarBg flex items-center justify-center">
+            <MapPin size={64} className="text-primary" />
+          </div>
         )}
         <div className="absolute bottom-0 w-full h-48 bg-gradient-to-t from-background via-background/80 to-transparent" />
         <div className="absolute inset-0 bg-black/10" />
@@ -250,7 +246,7 @@ export default function StationDetails() {
                 </div>
               </div>
               <button
-                onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lon}`, '_blank')}
+                onClick={() => navigate(`/navigate/${id}`)}
                 className="flex-1 flex justify-center items-center premium-card py-2.5 px-3 group hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <div 

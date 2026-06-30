@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Heart, MapPin, Star } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { getStationImageUrl } from '../lib/brandLogos';
+import { getPhotoUrl } from '../lib/overpass';
 import { SpotlightCard } from '../components/CursorEffects';
 
 export default function Favorites() {
@@ -44,9 +44,11 @@ export default function Favorites() {
                 className="flex flex-row p-3 items-center text-left w-full"
               >
                 {station.photoRef ? (
-                  <img src={getStationImageUrl(station.name, station.photoRef)} alt={station.name} className="w-16 h-16 rounded-xl mr-4 object-cover shrink-0" />
+                  <img src={getPhotoUrl(station.photoRef, 200)} alt={station.name} className="w-16 h-16 rounded-xl mr-4 object-cover shrink-0" />
                 ) : (
-                  <img src={getStationImageUrl(station.name)} alt={station.name} className="w-16 h-16 rounded-xl mr-4 object-contain shrink-0 p-2 bg-surfaceMuted" />
+                  <div className="w-16 h-16 rounded-xl bg-avatarBg flex items-center justify-center mr-4 shrink-0">
+                    <MapPin size={24} className="text-primary" />
+                  </div>
                 )}
                 <div className="flex-1 min-w-0 pr-2">
                   <h3 className="font-semibold text-base text-textPrimary mb-1 truncate">{station.name}</h3>
