@@ -6,7 +6,7 @@
 
 import axios from 'axios';
 
-const OVERPASS_API = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_API = 'https://lz4.overpass-api.de/api/interpreter';
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCe6KCXl5MO1INT16N9I_kiMwXxwZHJc8o';
 
 export interface GasStationPlace {
