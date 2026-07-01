@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Share2, Heart, Star, MapPin, Clock, Navigation, DollarSign, Image as ImageIcon, Droplet, ShoppingBag, Coffee, Zap, User, ThumbsUp, ThumbsDown, X, Maximize2, Fuel } from 'lucide-react';
+import { ArrowLeft, Share2, Heart, Star, MapPin, Navigation, DollarSign, Image as ImageIcon, Droplet, ShoppingBag, Coffee, Zap, User, ThumbsUp, ThumbsDown, X, Maximize2, Fuel } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getPlaceDetails, getPhotoUrl } from '../lib/overpass';
 import { api } from '../lib/axios';
@@ -238,13 +238,6 @@ export default function StationDetails() {
             </div>
 
             <div className="flex gap-3">
-              <div className="flex-1 flex justify-center items-center premium-card py-2.5 px-3">
-                <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-[14px] flex-1 justify-center
-                ${station.isOpen ? 'bg-avatarBg text-primary border-primary/20' : 'bg-error/10 text-error border-error/20'}`}>
-                  <Clock size={18} />
-                  {station.isOpen ? t('map.openNow') || 'Open Now' : t('common.closed') || 'Closed'}
-                </div>
-              </div>
               <button
                 onClick={() => station && window.open(`https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lon}`, '_blank')}
                 className="flex-1 flex justify-center items-center premium-card py-2.5 px-3 group hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"

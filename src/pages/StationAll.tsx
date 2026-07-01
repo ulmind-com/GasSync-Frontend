@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useRef, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, MapPin, Star, Clock, Navigation, Sliders } from 'lucide-react';
+import { ArrowLeft, MapPin, Star, Navigation, Sliders } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import { api } from '../lib/axios';
 import { fetchGasStationsPaginated, getPhotoUrl, calculateDistanceMiles } from '../lib/overpass';
@@ -163,12 +163,6 @@ export default function StationAll() {
                         <Star size={13} className="text-[#FFB800] fill-[#FFB800] mr-1" />
                         <span className="font-bold text-[12px] text-textPrimary">{item.rating > 0 ? item.rating.toFixed(1) : 'New'}</span>
                         {item.totalRatings > 0 && <span className="font-medium text-[11px] text-textMuted ml-1">({item.totalRatings})</span>}
-                      </div>
-                      <div className={`flex items-center shrink-0 whitespace-nowrap border px-2.5 py-1.5 rounded-xl ${item.isOpen ? 'bg-avatarBg border-primary/20' : 'bg-warning/10 border-warning/20'}`}>
-                        <Clock size={13} className={item.isOpen ? 'text-primary' : 'text-warning'} />
-                        <span className={`font-bold text-[12px] ml-1 ${item.isOpen ? 'text-primary' : 'text-warning'}`}>
-                          {item.isOpen === true ? 'Open' : item.isOpen === false ? 'Closed' : 'Unknown'}
-                        </span>
                       </div>
                       <div className="flex items-center shrink-0 whitespace-nowrap bg-surfaceMuted border border-border px-2.5 py-1.5 rounded-xl">
                         <Navigation size={13} className="text-textMuted mr-1" />
