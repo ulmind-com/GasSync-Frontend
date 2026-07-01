@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigation, TrendingDown, TrendingUp, List, Clock, Star, Droplet, Check, X, RotateCcw } from 'lucide-react';
+import { Navigation, TrendingDown, TrendingUp, X, RotateCcw } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import type { StationFilter, SortBy } from '../store/locationStore';
 
@@ -19,13 +19,6 @@ const SORT_OPTIONS: { key: SortBy; label: string; icon: React.ReactNode }[] = [
 ];
 
 const RADII = [1, 5, 10, 20, 30];
-
-const FEATURES: { key: StationFilter; label: string; icon: React.ReactNode }[] = [
-  { key: 'all', label: 'All Stations', icon: <List size={18} /> },
-  { key: 'open', label: 'Open Now', icon: <Clock size={18} /> },
-  { key: 'top_rated', label: 'Top Rated (4.0+)', icon: <Star size={18} /> },
-  { key: 'car_wash', label: 'Has Car Wash', icon: <Droplet size={18} /> },
-];
 
 const DEFAULTS = { sort: 'nearby' as SortBy, radius: 10, filter: 'all' as StationFilter, fuel: 'REGULAR_UNLEADED' };
 
@@ -131,24 +124,6 @@ export default function FilterModal({ open, onClose }: Props) {
               <button key={ft.key} onClick={() => setDraftFuel(ft.key)}
                 className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap border transition-colors ${active ? 'bg-primary border-primary text-white' : 'bg-surface border-border text-textSecondary hover:bg-surfaceMuted'}`}>
                 {ft.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="h-px bg-border w-full my-5" />
-
-        {/* Station Features */}
-        <h3 className="font-semibold text-base text-textPrimary mb-3">Station Features</h3>
-        <div className="flex flex-col gap-2">
-          {FEATURES.map((f) => {
-            const active = draftFilter === f.key;
-            return (
-              <button key={f.key} onClick={() => setDraftFilter(f.key)}
-                className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${active ? 'border-primary bg-avatarBg' : 'border-border bg-surface hover:bg-surfaceMuted'}`}>
-                <span className={active ? 'text-primary' : 'text-textMuted'}>{f.icon}</span>
-                <span className={`font-medium text-sm flex-1 text-left ${active ? 'text-primary' : 'text-textSecondary'}`}>{f.label}</span>
-                {active && <Check size={18} className="text-primary" />}
               </button>
             );
           })}
