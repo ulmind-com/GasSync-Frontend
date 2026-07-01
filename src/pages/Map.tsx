@@ -284,7 +284,7 @@ export default function MapScreen() {
               </div>
             )}
             <div className="flex gap-3 mt-4">
-              <button onClick={() => navigate(`/navigate/${selectedStation.id}`)} className="flex-1 bg-info hover:brightness-110 transition-all text-white flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm shadow-sm"><Navigation size={16} />Navigate</button>
+              <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${selectedStation.lat},${selectedStation.lon}`, '_blank')} className="flex-1 bg-info hover:brightness-110 transition-all text-white flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm shadow-sm"><Navigation size={16} />Navigate</button>
               <button onClick={() => navigate(`/scanner?googlePlaceId=${selectedStation.id}&stationName=${encodeURIComponent(selectedStation.name || '')}`)} className="flex-1 btn-primary py-2.5 rounded-xl text-sm"><List size={16} />Report Price</button>
             </div>
           </div>

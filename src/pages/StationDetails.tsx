@@ -246,7 +246,7 @@ export default function StationDetails() {
                 </div>
               </div>
               <button
-                onClick={() => navigate(`/navigate/${id}`)}
+                onClick={() => station && window.open(`https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lon}`, '_blank')}
                 className="flex-1 flex justify-center items-center premium-card py-2.5 px-3 group hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <div 
