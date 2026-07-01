@@ -155,6 +155,10 @@ export default function Home() {
       return res.data?.data || [];
     },
     enabled: !!lat && !!lon,
+    // Community must be real-time — refetch on every visit, no stale cache.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     refetchInterval: 15000,
   });
 

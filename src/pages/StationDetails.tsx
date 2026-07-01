@@ -106,7 +106,10 @@ export default function StationDetails() {
       return res.data?.data;
     },
     enabled: !!station,
-    staleTime: 1000 * 60 * 60,
+    // Community prices must be real-time (never cached): always refetch on open/focus.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const { showToast } = useToast();

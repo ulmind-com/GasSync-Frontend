@@ -88,7 +88,10 @@ const Scanner = () => {
       resetForm();
       queryClient.invalidateQueries({ queryKey: ['my-bills'] });
       queryClient.invalidateQueries({ queryKey: ['bill-stats'] });
-      if (googlePlaceId) queryClient.invalidateQueries({ queryKey: ['station-prices', googlePlaceId] });
+      // Refresh everywhere community prices appear (station detail + home).
+      queryClient.invalidateQueries({ queryKey: ['station-prices'] });
+      queryClient.invalidateQueries({ queryKey: ['home-community-nearby'] });
+      queryClient.invalidateQueries({ queryKey: ['home-station-prices'] });
       showToast('🎉 Price reported! Your bill is now live in the Community tab.', 'success');
       setTimeout(() => { if (googlePlaceId) navigate(`/station/${googlePlaceId}`); else navigate('/home'); }, 900);
     },
