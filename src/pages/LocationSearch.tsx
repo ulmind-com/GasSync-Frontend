@@ -27,9 +27,8 @@ const darkMapStyle = [
 ];
 
 const GOOGLE_API_KEY = "AIzaSyCe6KCXl5MO1INT16N9I_kiMwXxwZHJc8o";
-const MAPS_API_BASE = '/maps-api';
 
-type Prediction = { description: string; place_id: string; };
+type Prediction = { description: string; place_id: string; lat: number; lon: number; };
 
 export default function LocationSearch() {
   const navigate = useNavigate();
@@ -56,46 +55,38 @@ export default function LocationSearch() {
   const fetchPredictions = async (query: string) => {
     setIsSearching(true);
     try {
-      const url = `${MAPS_API_BASE}/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}`;
-      const res = await fetch(url); const json = await res.json();
-      if (json.predictions) setPredictions(json.predictions);
-    } catch (e) { console.log('Autocomplete error:', e); }
+      // Free OpenStreetMap (Nominatim) search — returns place + lat/lon together.
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`;
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      const json = await res.json();
+      setPredictions((Array.isArray(json) ? json : []).map((p: any) => ({
+        description: p.display_name, place_id: String(p.place_id), lat: parseFloat(p.lat), lon: parseFloat(p.lon),
+      })));
+    } catch (e) { console.log('Search error:', e); }
     setIsSearching(false);
   };
 
   const handleSelectPlace = async (prediction: Prediction) => {
     setPredictions([]); setSearchQuery(prediction.description);
-    try {
-      const url = `${MAPS_API_BASE}/geocode/json?address=${encodeURIComponent(prediction.description)}&key=${GOOGLE_API_KEY}`;
-      const res = await fetch(url); const json = await res.json();
-      if (json.results && json.results.length > 0) {
-        const { lat, lng } = json.results[0].geometry.location;
-        setTempLat(lat); setTempLon(lng);
-        mapInstance?.panTo({ lat, lng }); mapInstance?.setZoom(15);
-      }
-    } catch (e) { console.log('Geocode error:', e); }
+    if (!isNaN(prediction.lat) && !isNaN(prediction.lon)) {
+      setTempLat(prediction.lat); setTempLon(prediction.lon);
+      mapInstance?.panTo({ lat: prediction.lat, lng: prediction.lon }); mapInstance?.setZoom(13);
+    }
   };
 
   const handleConfirmLocation = async () => {
     try {
-      const url = `${MAPS_API_BASE}/geocode/json?latlng=${tempLat},${tempLon}&key=${GOOGLE_API_KEY}`;
-      const res = await fetch(url); const json = await res.json();
-      let cityName = 'Unknown Location';
-      if (json.results && json.results.length > 0) {
-        const result = json.results[0];
-        const comp = result.address_components || [];
-        const get = (type: string) => {
-          const c = comp.find((x: any) => x.types?.includes(type));
-          return c?.short_name || c?.long_name;
-        };
-        cityName = buildShortAddress({
-          houseNumber: get('street_number'),
-          street: get('route'),
-          city: get('locality') || get('postal_town') || get('sublocality') || get('administrative_area_level_2'),
-          state: get('administrative_area_level_1'),
-          postcode: get('postal_code'),
-        }) || result.formatted_address;
-      }
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${tempLat}&lon=${tempLon}&format=json&addressdetails=1`;
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      const json = await res.json();
+      const a = json.address || {};
+      const cityName = buildShortAddress({
+        houseNumber: a.house_number,
+        street: a.road,
+        city: a.city || a.town || a.village || a.county,
+        state: a.state,
+        postcode: a.postcode,
+      }) || json.display_name || 'Unknown Location';
       setLocation(tempLat, tempLon, cityName); navigate(-1);
     } catch { setLocation(tempLat, tempLon, 'Unknown Location'); navigate(-1); }
   };
