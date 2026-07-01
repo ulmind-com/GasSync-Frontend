@@ -161,13 +161,13 @@ export default function MapScreen() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-136px)] premium-card overflow-hidden relative">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-80px)] sm:h-[calc(100vh-136px)] premium-card overflow-hidden relative">
       {/* Left Panel */}
-      <div className="w-full md:w-[400px] lg:w-[450px] flex flex-col h-full bg-surface z-10 shrink-0 border-r border-border">
-        <div className="p-4 border-b border-border bg-surface">
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={() => navigate(-1)} className="w-10 h-10 hover:bg-surfaceMuted rounded-full flex items-center justify-center text-textSecondary transition-colors"><ArrowLeft size={20} /></button>
-            <h1 className="font-bold text-lg text-textPrimary">{t('map.title')}</h1>
+      <div className="w-full md:w-[400px] lg:w-[450px] flex flex-col h-[45vh] md:h-full bg-surface z-10 shrink-0 md:border-r border-border order-2 md:order-1">
+        <div className="p-3 sm:p-4 border-b border-border bg-surface">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <button onClick={() => navigate(-1)} className="w-9 h-9 sm:w-10 sm:h-10 hover:bg-surfaceMuted rounded-full flex items-center justify-center text-textSecondary transition-colors"><ArrowLeft size={18} /></button>
+            <h1 className="font-bold text-base sm:text-lg text-textPrimary">{t('map.title')}</h1>
             {(() => {
               const filtersActive = activeFilter !== 'all' || sortBy !== 'nearby' || selectedFuel !== 'REGULAR_UNLEADED';
               return (
@@ -180,9 +180,9 @@ export default function MapScreen() {
           </div>
 
           <div className="relative">
-            <div className="premium-input flex items-center px-4 h-12">
-              <Search size={18} className="text-textMuted" />
-              <input type="text" className="flex-1 bg-transparent outline-none ml-3 font-medium text-sm text-textPrimary placeholder:text-textMuted" placeholder={t('map.searchPlaceholder')} value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
+              <div className="premium-input flex items-center px-3 sm:px-4 h-11 sm:h-12">
+              <Search size={16} className="text-textMuted" />
+              <input type="text" className="flex-1 bg-transparent outline-none ml-2 sm:ml-3 font-medium text-[13px] sm:text-sm text-textPrimary placeholder:text-textMuted" placeholder={t('map.searchPlaceholder')} value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
             </div>
             {showSearchResults && (
               <div data-lenis-prevent className="absolute top-[60px] left-5 right-5 premium-modal shadow-premium-lg max-h-[60vh] overflow-y-auto overscroll-contain z-50">
@@ -219,9 +219,9 @@ export default function MapScreen() {
             <div className="flex flex-col gap-3">
               {sortedStations.map((item) => (
                 <button key={item.id} onClick={() => navigate(`/station/${item.id}`)}
-                  className={`premium-card p-3 text-left flex gap-3 transition-all ${selectedStation?.id === item.id ? 'border-primary shadow-md' : 'hover:shadow-md hover:border-border-strong'}`}
+                  className={`premium-card p-2.5 sm:p-3 text-left flex gap-2.5 sm:gap-3 transition-all ${selectedStation?.id === item.id ? 'border-primary shadow-md' : 'hover:shadow-md hover:border-border-strong'}`}
                 >
-                  <div className="w-[100px] h-[80px] bg-surfaceMuted rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                  <div className="w-[80px] h-[65px] sm:w-[100px] sm:h-[80px] bg-surfaceMuted rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                     {item.photoRef ? <img src={getPhotoUrl(item.photoRef, 200)} alt={item.name} className="w-full h-full object-cover" /> : <MapPin size={20} className="text-primary" />}
                   </div>
                   <div className="flex flex-col flex-1 min-w-0">
@@ -250,7 +250,7 @@ export default function MapScreen() {
       </div>
 
       {/* Map Section */}
-      <div className="flex-1 h-[40vh] md:h-full relative bg-surfaceMuted border-l border-border">
+      <div className="flex-1 h-[55vh] md:h-full relative bg-surfaceMuted md:border-l border-border order-1 md:order-2">
         <GoogleMap mapContainerStyle={{ width: '100%', height: '100%' }} center={{ lat: lat ?? 29.7604, lng: lon ?? -95.3698 }} zoom={12} onLoad={setMap} options={{ disableDefaultUI: true, styles: isDark ? darkMapStyle : [] }}>
           {lat !== null && lon !== null && (
             <Marker position={{ lat, lng: lon }} icon={{ url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="%23208AEF" stroke="white" stroke-width="3"/></svg>', scaledSize: new google.maps.Size(24, 24) }} zIndex={999} />
@@ -264,8 +264,8 @@ export default function MapScreen() {
         </GoogleMap>
 
         <button onClick={() => { if (lat !== null && lon !== null && map) { const getZoomForRadius = (r: number) => { if (r <= 1) return 14; if (r <= 5) return 12; if (r <= 10) return 11; if (r <= 20) return 10; return 9; }; map.setZoom(getZoomForRadius(radiusMiles)); map.panTo({ lat, lng: lon }); } }}
-          className="absolute top-6 right-6 w-12 h-12 glass rounded-full shadow-glass flex items-center justify-center text-textSecondary hover:text-info hover:bg-surfaceMuted transition-colors z-10"
-        ><LocateFixed size={20} /></button>
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 sm:w-12 sm:h-12 glass rounded-full shadow-glass flex items-center justify-center text-textSecondary hover:text-info hover:bg-surfaceMuted transition-colors z-10"
+        ><LocateFixed size={18} /></button>
 
         {selectedStation && (
           <div className="absolute bottom-6 right-6 w-full max-w-[340px] liquid-glass rounded-2xl p-5 shadow-premium-lg z-20 transform transition-all duration-300">

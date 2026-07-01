@@ -101,26 +101,26 @@ export default function StationAll() {
   return (
     <div className="flex flex-col flex-1 pb-10 w-full min-h-[calc(100vh-100px)] bg-background -mt-6">
       {/* Header */}
-      <div className="sticky top-0 z-30 glass pt-8 pb-4 px-4 sm:px-6 lg:px-8 border-b border-border flex items-center justify-between mb-4">
-        <button onClick={() => navigate(-1)} className="w-12 h-12 bg-surface rounded-full flex items-center justify-center shadow-premium-sm border border-border text-textPrimary hover:bg-surfaceMuted hover:scale-105 active:scale-95 transition-all">
-          <ArrowLeft size={22} />
+      <div className="sticky top-0 z-30 glass pt-6 sm:pt-8 pb-3 sm:pb-4 px-4 sm:px-6 lg:px-8 border-b border-border flex items-center justify-between mb-3 sm:mb-4">
+        <button onClick={() => navigate(-1)} className="w-10 h-10 sm:w-12 sm:h-12 bg-surface rounded-full flex items-center justify-center shadow-premium-sm border border-border text-textPrimary hover:bg-surfaceMuted hover:scale-105 active:scale-95 transition-all">
+          <ArrowLeft size={20} />
         </button>
         <div className="flex flex-col items-center">
-          <h1 className="font-bold text-2xl text-textPrimary tracking-tight">Gas Stations</h1>
-          <p className="font-bold text-[13px] text-primary mt-0.5 bg-avatarBg px-3 py-1 rounded-full">{radiusMiles} Miles Radius</p>
+          <h1 className="font-bold text-xl sm:text-2xl text-textPrimary tracking-tight">Gas Stations</h1>
+          <p className="font-bold text-[12px] sm:text-[13px] text-primary mt-0.5 bg-avatarBg px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full">{radiusMiles} Miles Radius</p>
         </div>
         {(() => {
           const filtersActive = activeFilter !== 'all' || sortBy !== 'nearby' || selectedFuel !== 'REGULAR_UNLEADED';
           return (
-            <button onClick={() => setFilterOpen(true)} className="relative w-12 h-12 bg-surface rounded-full flex items-center justify-center shadow-premium-sm border border-border text-textPrimary hover:bg-surfaceMuted hover:scale-105 active:scale-95 transition-all">
-              <Sliders size={20} className={filtersActive ? 'text-primary' : ''} />
+            <button onClick={() => setFilterOpen(true)} className="relative w-10 h-10 sm:w-12 sm:h-12 bg-surface rounded-full flex items-center justify-center shadow-premium-sm border border-border text-textPrimary hover:bg-surfaceMuted hover:scale-105 active:scale-95 transition-all">
+              <Sliders size={18} className={filtersActive ? 'text-primary' : ''} />
               {filtersActive && <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-surface" />}
             </button>
           );
         })()}
       </div>
 
-      <div className="px-4 sm:px-6 lg:px-8 pt-4">
+      <div className="px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center mt-32">
             <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -133,7 +133,7 @@ export default function StationAll() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger-children">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 stagger-children">
               {sortedStations.map((item, idx) => (
                 <TiltCard
                   key={`${item.id}-${idx}`}
@@ -141,8 +141,8 @@ export default function StationAll() {
                   tiltStrength={5}
                   onClick={() => navigate(`/station/${item.id}`)}
                 >
-                <div className="p-4 flex flex-col text-left group relative cursor-pointer">
-                  <div className="w-full h-[180px] rounded-[18px] bg-surfaceMuted shrink-0 overflow-hidden relative mb-4">
+                <div className="p-3 sm:p-4 flex flex-row sm:flex-col text-left group relative cursor-pointer">
+                  <div className="w-24 h-20 sm:w-full sm:h-[180px] rounded-[14px] sm:rounded-[18px] bg-surfaceMuted shrink-0 overflow-hidden relative sm:mb-4">
                     {item.photoRef ? (
                       <img src={getPhotoUrl(item.photoRef, 400)} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
@@ -155,9 +155,9 @@ export default function StationAll() {
                       <span className="font-medium text-[10px] text-white/70">/gal</span>
                     </div>
                   </div>
-                  <div className="flex flex-col flex-1 min-w-0 w-full px-1">
-                    <h3 className="font-bold text-[19px] text-textPrimary truncate mb-1.5 tracking-tight">{item.name}</h3>
-                    {item.address && <p className="font-medium text-[13px] text-textMuted truncate mb-5">{item.address}</p>}
+                  <div className="flex flex-col flex-1 min-w-0 w-full pl-3 sm:pl-0 sm:px-1 justify-center">
+                    <h3 className="font-bold text-[16px] sm:text-[19px] text-textPrimary truncate mb-0.5 sm:mb-1.5 tracking-tight">{item.name}</h3>
+                    {item.address && <p className="font-medium text-[12px] sm:text-[13px] text-textMuted truncate mb-3 sm:mb-5">{item.address}</p>}
                     <div className="flex flex-wrap items-center gap-1.5 mt-auto">
                       <div className="flex items-center shrink-0 whitespace-nowrap bg-surfaceMuted border border-border px-2.5 py-1.5 rounded-xl">
                         <Star size={13} className="text-[#FFB800] fill-[#FFB800] mr-1" />

@@ -407,3 +407,145 @@
   .stagger-children > *:nth-child(9) { transition-delay: 640ms; }
   .stagger-children > *:nth-child(10) { transition-delay: 720ms; }
 }
+
+/* ============================================================
+   Mobile-First Premium Design System
+   ============================================================ */
+
+/* ── Safe area insets for notched/dynamic-island phones ── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .safe-top { padding-top: env(safe-area-inset-top, 0px); }
+}
+
+/* ── Mobile-specific overrides ── */
+@media (max-width: 639px) {
+  /* Hide scrollbar on mobile for cleaner native feel */
+  ::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+
+  /* Mobile typography scale — tighter, crisper */
+  h1 { font-size: 1.625rem !important; letter-spacing: -0.03em; }
+  h2 { font-size: 1.25rem !important; }
+  h3 { font-size: 1.05rem !important; }
+
+  /* Mobile cards — slightly tighter radius for compact feel */
+  .premium-card { border-radius: 0.875rem; }
+  .glass-card, .glass-card-interactive { border-radius: 0.875rem; }
+  .liquid-glass { border-radius: 1.25rem !important; }
+
+  /* Reduce hover transforms on mobile (they interfere with touch) */
+  .premium-card-hover:hover { transform: none; }
+  .glass-card-interactive:hover { transform: none; }
+
+  /* Bottom nav clearance zone */
+  .mobile-bottom-safe { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+
+  /* Touch-optimized minimum tap target */
+  button, a, [role="button"] { min-height: 40px; }
+  
+  /* Edge-to-edge card style on mobile */
+  .mobile-edge { margin-left: -1rem; margin-right: -1rem; border-radius: 0; }
+
+  /* Mobile horizontal scroll container */
+  .mobile-scroll-x {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+  .mobile-scroll-x > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  /* Mobile bottom sheet base style */
+  .mobile-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 1.5rem 1.5rem 0 0;
+    max-height: 70vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .mobile-bottom-sheet::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 9999px;
+    background: rgb(var(--color-text-muted) / 0.3);
+    margin: 8px auto 12px;
+  }
+
+  /* Premium mobile input — slightly larger for thumb */
+  .premium-input { border-radius: 0.875rem; min-height: 52px; }
+
+  /* Premium modal — full width bottom sheet on mobile */
+  .premium-modal {
+    border-radius: 1.5rem 1.5rem 0 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ── Reduced motion for accessibility ── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-scale, .reveal-left { transition: none !important; opacity: 1 !important; transform: none !important; }
+  .premium-card-hover:hover { transform: none; }
+  .animate-float { animation: none; }
+}
+
+/* ── Mobile bottom tab bar styles ── */
+@layer components {
+  .mobile-tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgb(var(--color-glass) / 0.85);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-top: 1px solid rgb(var(--color-glass-border) / var(--glass-border-alpha));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .mobile-tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 0;
+    flex: 1;
+    min-height: 56px;
+    transition: all 0.2s ease;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mobile-tab-item.active {
+    color: rgb(var(--color-primary));
+  }
+  .mobile-tab-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: linear-gradient(135deg, rgb(var(--color-primary)), rgb(var(--color-primary-strong)));
+  }
+  .mobile-tab-label {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+}

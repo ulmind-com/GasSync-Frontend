@@ -82,7 +82,7 @@ export default function History() {
             <div className="w-20 h-20 bg-surfaceMuted rounded-full flex items-center justify-center mb-5"><FileText size={32} className="text-textMuted/30" /></div>
             <h2 className="font-semibold text-xl text-textPrimary mb-2">{t('history.noUploads')}</h2>
             <p className="font-medium text-textMuted text-center max-w-sm mb-6">{t('history.noUploadsSub')}</p>
-            <button onClick={() => navigate('/home')} className="btn-primary px-8 py-3 rounded-full text-base flex items-center gap-2"><Camera size={18} />{t('history.scanFirst')}</button>
+            <button onClick={() => navigate('/')} className="btn-primary px-8 py-3 rounded-full text-base flex items-center gap-2"><Camera size={18} />{t('history.scanFirst')}</button>
           </div>
         )}
       </div>

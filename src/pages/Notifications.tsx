@@ -71,10 +71,10 @@ export default function Notifications() {
     return (
       <div className="flex flex-col min-h-screen bg-background relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-[200px] bg-gradient-to-b from-info/10 to-transparent -z-10" />
-        <div className="px-5 pt-8 pb-4 flex items-center justify-between z-10">
-          <button onClick={() => navigate(-1)} className="w-11 h-11 bg-surface rounded-full flex items-center justify-center shadow-premium-sm text-textPrimary"><ArrowLeft size={20} /></button>
-          <h1 className="font-heading font-bold text-xl text-textPrimary">{t('notifications.title')}</h1>
-          <div className="w-11 h-11" />
+        <div className="px-4 sm:px-5 pt-6 sm:pt-8 pb-3 sm:pb-4 flex items-center justify-between z-10">
+          <button onClick={() => navigate(-1)} className="w-10 h-10 sm:w-11 sm:h-11 bg-surface rounded-full flex items-center justify-center shadow-premium-sm text-textPrimary"><ArrowLeft size={18} /></button>
+          <h1 className="font-heading font-bold text-lg sm:text-xl text-textPrimary">{t('notifications.title')}</h1>
+          <div className="w-10 h-10 sm:w-11 sm:h-11" />
         </div>
         <div className="flex flex-col items-center justify-center mt-20 px-10">
           <div className="w-20 h-20 bg-avatarBg rounded-full flex items-center justify-center mb-5"><Lock size={40} className="text-primary" /></div>
@@ -89,9 +89,9 @@ export default function Notifications() {
   return (
     <div className="flex flex-col min-h-screen bg-background pb-24 relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-[200px] bg-gradient-to-b from-info/10 to-transparent -z-10" />
-      <div className="px-5 pt-8 pb-4 flex items-center justify-between z-10">
-        <button onClick={() => navigate(-1)} className="w-11 h-11 bg-surface rounded-full flex items-center justify-center shadow-premium-sm text-textPrimary hover:bg-surfaceMuted transition-colors"><ArrowLeft size={20} /></button>
-        <h1 className="font-heading font-bold text-xl text-textPrimary">{t('notifications.title')}</h1>
+      <div className="px-4 sm:px-5 pt-6 sm:pt-8 pb-3 sm:pb-4 flex items-center justify-between z-10">
+        <button onClick={() => navigate(-1)} className="w-10 h-10 sm:w-11 sm:h-11 bg-surface rounded-full flex items-center justify-center shadow-premium-sm text-textPrimary hover:bg-surfaceMuted transition-colors"><ArrowLeft size={18} /></button>
+        <h1 className="font-heading font-bold text-lg sm:text-xl text-textPrimary">{t('notifications.title')}</h1>
         {unreadCount > 0 ? (
           <button onClick={() => markAllReadMutation.mutate()} className="w-11 h-11 bg-surface rounded-full flex items-center justify-center shadow-premium-sm text-primary hover:bg-surfaceMuted transition-colors"><CheckCircle size={18} /></button>
         ) : ( <div className="w-11 h-11" /> )}
@@ -103,7 +103,7 @@ export default function Notifications() {
         </div>
       )}
 
-      <div className="flex-1 px-5 pt-2">
+      <div className="flex-1 px-4 sm:px-5 pt-2">
         {isLoading ? (
           <div className="flex justify-center mt-10"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
         ) : notifications.length === 0 ? (

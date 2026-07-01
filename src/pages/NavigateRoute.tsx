@@ -2,17 +2,27 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, MapPin, ExternalLink, Loader2, Clock, Navigation, X } from 'lucide-react';
+import { ArrowLeft, MapPin, ExternalLink, Loader2, Clock, Navigation, X, LocateFixed } from 'lucide-react';
 import { getPlaceDetails, getRoute, type GasStationPlace, type RouteResult } from '../lib/overpass';
-import { buildRoutePath, locateAlongRoute, smoothHeading, snapToRoute, haversine, bearing, type LatLng } from '../lib/geo';
+import { buildRoutePath, smoothHeading, snapToRoute, haversine, bearing, offsetPoint, headingDelta, type LatLng } from '../lib/geo';
 import { useLocationStore } from '../store/locationStore';
 import { useThemeStore } from '../store/themeStore';
 
-// How much faster than real driving speed to animate the demo. Set to 1 for
-// true real-time movement; a small multiplier keeps the trip watchable.
-const NAV_SPEED_MULTIPLIER = 4;
-// Minimum metres/second so very short or slow routes still visibly progress.
-const MIN_SPEED_MPS = 11; // ~40 km/h
+// ─── Live-GPS navigation tunables ───
+// Movement is driven 100% by real device GPS fixes — there is NO simulation,
+// timer, or polyline auto-progression anywhere. These constants only filter
+// noise and shape the camera, exactly like Google Maps live navigation.
+const GPS_MAX_ACCURACY_M = 60;       // drop fixes noisier than this (metres)
+const STATIONARY_MOVE_M = 2.5;       // moves smaller than this (at low speed) = standing still
+const STATIONARY_SPEED_MPS = 0.5;    // ~1.8 km/h — below this we treat the device as stopped
+const HEADING_MIN_SPEED_MPS = 0.7;   // only trust the device compass heading above this speed
+const HEADING_MIN_MOVE_M = 3;        // or derive heading once we've moved at least this far
+const OFFROUTE_M = 60;               // perpendicular distance that counts as "off the route"
+const OFFROUTE_FIXES_TO_REROUTE = 4; // consecutive off-route fixes before we recompute
+const ARRIVE_M = 25;                 // distance-to-destination that counts as arrived
+const FOLLOW_ZOOM = 18;
+const FOLLOW_TILT = 55;
+const CAMERA_LEAD_M = 80;            // push the camera target ahead so the puck sits low on screen
 
 const darkMapStyle = [
   { "elementType": "geometry", "stylers": [{ "color": "#212121" }] },
@@ -93,6 +103,27 @@ export default function NavigateRoute() {
   const [arrived, setArrived] = useState(false);
   const [vehicle, setVehicle] = useState<LatLng | null>(null);
   const [remainingMeters, setRemainingMeters] = useState<number | null>(null);
+  const [rerouting, setRerouting] = useState(false);
+  const [gpsReady, setGpsReady] = useState(false); // first real fix received
+
+  // Camera follows the vehicle until the user drags the map; then we show a
+  // "Re-centre" button (Google-Maps style). Ref so the live loop reads it live.
+  const followingRef = useRef(true);
+  const [showRecenter, setShowRecenter] = useState(false);
+
+  // ─── Live-navigation refs (driven by real GPS only) ───
+  const renderedRef = useRef<LatLng | null>(null);    // position currently drawn on screen
+  const targetRef = useRef<LatLng | null>(null);      // latest real GPS target to settle toward
+  const headingRef = useRef(0);                       // target heading from real movement
+  const smoothHeadingRef = useRef(0);                 // displayed (eased) heading
+  const lastAcceptedRef = useRef<LatLng | null>(null);// last accepted raw GPS fix
+  const animRef = useRef(0);                          // settle-animation RAF id (0 = idle)
+  const lastFrameRef = useRef(0);
+  const offRouteCountRef = useRef(0);
+  const reroutingRef = useRef(false);
+  const arrivedRef = useRef(false);
+  const gpsReadyRef = useRef(false);
+  const hadOnRouteRef = useRef(false);
 
   // Pre-computed cumulative distances along the route for smooth interpolation.
   const routePath = useMemo(
@@ -117,7 +148,7 @@ export default function NavigateRoute() {
   // ─── Fetch the selected station ───
   useEffect(() => {
     if (!id) {
-      navigate('/home');
+      navigate('/');
       return;
     }
     (async () => {
@@ -160,13 +191,14 @@ export default function NavigateRoute() {
     })();
   }, [station, lat, lon]);
 
-  // ─── Fit the map to the whole route ───
+  // ─── Fit the map to the whole route (overview only — never while navigating,
+  // so a reroute mid-trip doesn't yank the follow camera off the vehicle) ───
   useEffect(() => {
-    if (!map || !route || route.points.length === 0) return;
+    if (!map || !route || route.points.length === 0 || isNavigating) return;
     const bounds = new google.maps.LatLngBounds();
     route.points.forEach((p) => bounds.extend(p));
     map.fitBounds(bounds, { top: 130, bottom: 300, left: 70, right: 70 });
-  }, [map, route]);
+  }, [map, route, isNavigating]);
 
   // ─── Animate a flowing dash along the route ───
   useEffect(() => {
@@ -189,110 +221,218 @@ export default function NavigateRoute() {
     return () => cancelAnimationFrame(raf);
   }, [route]);
 
-  // ─── Drive the vehicle along the route, Google-Maps style ───
-  // A single `progress` (metres travelled along the route) feeds the marker
-  // and the heading-up follow camera. Two sources move it:
-  //   • Simulation runs by default, so movement is ALWAYS visible — including
-  //     on desktop or wherever the real GPS isn't on this route.
-  //   • The moment real GPS fixes land ON this route (you're actually driving
-  //     it), GPS takes over and the navigator follows YOU in real time.
+  // ─── Live navigation engine — 100% real GPS, no simulation ───
+  // The vehicle/camera/progress react ONLY to fixes from the device's GPS via
+  // watchPosition. Between two real fixes the marker *settles* toward the most
+  // recent fix (so motion is smooth, never jumpy) and then stops — it never
+  // invents forward movement. Stand still → nothing moves. GPS pauses → the
+  // puck freezes at the last real position.
   useEffect(() => {
-    if (!isNavigating || !routePath || !map || !route) return;
+    if (!isNavigating || !routePath || !map || !station) return;
+    const destination: LatLng = { lat: station.lat, lng: station.lon };
 
-    // Average route speed, sped up by the demo multiplier (simulation only).
-    const avgSpeed = route.durationSeconds > 0 ? routePath.total / route.durationSeconds : MIN_SPEED_MPS;
-    const simSpeed = Math.max(MIN_SPEED_MPS, avgSpeed) * NAV_SPEED_MULTIPLIER;
+    // Where the camera should look: a little ahead of the puck along its
+    // heading, so the user sits near the bottom of the screen (Google style).
+    const cameraTarget = (p: LatLng, heading: number) =>
+      offsetPoint(p, heading, CAMERA_LEAD_M);
 
-    const start = locateAlongRoute(routePath, 0);
-    let progress = 0;                 // metres along route, rendered on screen
-    let smoothedHeading = start.heading;
+    // Settle animation: ease the drawn position toward the latest GPS target,
+    // then halt. Triggered by each fix; self-terminating when caught up.
+    const settle = (now: number) => {
+      const dt = Math.min((now - lastFrameRef.current) / 1000, 0.05);
+      lastFrameRef.current = now;
+      const target = targetRef.current;
+      const cur = renderedRef.current;
+      if (!target || !cur) { animRef.current = 0; return; }
 
-    // Latest usable (on-route) GPS reading.
-    let gpsTravelled = -1;
-    let gpsHeading = start.heading;
-    let gpsAt = 0;
-    let lastRaw: LatLng | null = null;
+      const kPos = 1 - Math.exp(-dt / 0.4);    // ~0.4s time-constant: gently chase
+                                               // the latest real fix, never past it
+      const next: LatLng = {
+        lat: cur.lat + (target.lat - cur.lat) * kPos,
+        lng: cur.lng + (target.lng - cur.lng) * kPos,
+      };
+      renderedRef.current = next;
+      smoothHeadingRef.current = smoothHeading(smoothHeadingRef.current, headingRef.current, 0.18);
+      setVehicle(next);
+      if (followingRef.current) {
+        map.moveCamera({
+          center: cameraTarget(next, smoothHeadingRef.current),
+          zoom: FOLLOW_ZOOM,
+          tilt: FOLLOW_TILT,
+          heading: smoothHeadingRef.current,
+        });
+      }
 
-    setVehicle({ lat: start.lat, lng: start.lng });
-    map.moveCamera({ center: { lat: start.lat, lng: start.lng }, zoom: 18, tilt: 55, heading: smoothedHeading });
+      const posSettled = haversine(next, target) < 0.4;
+      const headSettled = Math.abs(headingDelta(smoothHeadingRef.current, headingRef.current)) < 0.5;
+      if (posSettled && headSettled) {
+        // Caught up to the real fix — stop. No continued/automatic animation.
+        renderedRef.current = target;
+        setVehicle(target);
+        animRef.current = 0;
+        return;
+      }
+      animRef.current = requestAnimationFrame(settle);
+    };
+    const kickSettle = () => {
+      if (animRef.current === 0) {
+        lastFrameRef.current = performance.now();
+        animRef.current = requestAnimationFrame(settle);
+      }
+    };
+
+    // Recompute the route from the live position when the driver has clearly
+    // left it. Replacing `route` rebuilds routePath and restarts this effect.
+    const reroute = async (from: LatLng) => {
+      if (reroutingRef.current) return;
+      reroutingRef.current = true;
+      setRerouting(true);
+      const result = await getRoute({ lat: from.lat, lng: from.lng }, destination);
+      if (result && result.points.length > 1) setRoute(result);
+      offRouteCountRef.current = 0;
+      reroutingRef.current = false;
+      setRerouting(false);
+    };
+
+    const onFix = (pos: GeolocationPosition) => {
+      const raw: LatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const accuracy = pos.coords.accuracy;
+      const speed = pos.coords.speed; // m/s or null
+
+      // 1) Reject noisy fixes outright.
+      if (typeof accuracy === 'number' && accuracy > GPS_MAX_ACCURACY_M) return;
+
+      if (!gpsReadyRef.current) { gpsReadyRef.current = true; setGpsReady(true); }
+
+      const last = lastAcceptedRef.current;
+      const moved = last ? haversine(last, raw) : Infinity;
+      const movingBySpeed = typeof speed === 'number' && speed > STATIONARY_SPEED_MPS;
+
+      // 2) Standing still → ignore jitter so the puck/heading stay rock-steady.
+      if (last && moved < STATIONARY_MOVE_M && !movingBySpeed) return;
+
+      // 3) Heading from real motion only (keep the last heading when stopped).
+      if (last && moved >= HEADING_MIN_MOVE_M) {
+        headingRef.current = bearing(last, raw);
+      } else if (
+        movingBySpeed &&
+        typeof pos.coords.heading === 'number' &&
+        !Number.isNaN(pos.coords.heading) &&
+        (speed ?? 0) > HEADING_MIN_SPEED_MPS
+      ) {
+        headingRef.current = pos.coords.heading;
+      }
+
+      // 4) Map-match to the route: snap onto the line + measure progress.
+      const snap = snapToRoute(routePath, raw);
+      let displayPos = raw;
+      if (snap.offset <= OFFROUTE_M) {
+        displayPos = { lat: snap.lat, lng: snap.lng };
+        setRemainingMeters(Math.max(0, routePath.total - snap.distanceAlong));
+        offRouteCountRef.current = 0;
+        hadOnRouteRef.current = true;
+        if (routePath.total - snap.distanceAlong < ARRIVE_M && !arrivedRef.current) {
+          arrivedRef.current = true;
+          targetRef.current = displayPos;
+          renderedRef.current = displayPos;
+          setVehicle(displayPos);
+          setRemainingMeters(0);
+          setArrived(true);
+          setIsNavigating(false);
+          return;
+        }
+      } else {
+        // Off-route: show the true GPS point and consider a reroute. Only
+        // reroute once the driver has actually been on the route and then left
+        // it — never from a start that was never on it (e.g. desktop testing).
+        setRemainingMeters(haversine(raw, destination));
+        offRouteCountRef.current += 1;
+        if (hadOnRouteRef.current && offRouteCountRef.current >= OFFROUTE_FIXES_TO_REROUTE) reroute(raw);
+      }
+
+      // 5) Commit the new real target and animate toward it.
+      lastAcceptedRef.current = raw;
+      targetRef.current = displayPos;
+      if (!renderedRef.current) {
+        renderedRef.current = displayPos;
+        smoothHeadingRef.current = headingRef.current;
+        setVehicle(displayPos);
+      }
+      kickSettle();
+    };
+
+    // A manual drag releases the camera so the user can look around freely.
+    const dragListener = map.addListener('dragstart', () => {
+      if (followingRef.current) {
+        followingRef.current = false;
+        setShowRecenter(true);
+      }
+    });
 
     let watchId: number | null = null;
     if ('geolocation' in navigator) {
       watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          const raw: LatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          const snap = snapToRoute(routePath, raw);
-          // Only trust GPS that is actually on THIS route. This rejects
-          // desktop / wrong-region fixes so the demo simulation keeps running,
-          // and engages real following only when you're really on the road.
-          if (snap.offset <= 80) {
-            gpsTravelled = snap.distanceAlong;
-            gpsAt = performance.now();
-            const speed = pos.coords.speed ?? 0;
-            if (lastRaw && haversine(lastRaw, raw) > 4) gpsHeading = bearing(lastRaw, raw);
-            else if (typeof pos.coords.heading === 'number' && !Number.isNaN(pos.coords.heading) && speed > 0.7) gpsHeading = pos.coords.heading;
-            else gpsHeading = snap.heading;
-          }
-          lastRaw = raw;
-        },
-        () => { /* ignore transient GPS errors; simulation keeps it moving */ },
-        { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 }
+        onFix,
+        () => { /* transient GPS error — keep the last real position, never fake one */ },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
       );
     }
 
-    let raf = 0;
-    let last = performance.now();
-
-    const tick = (now: number) => {
-      const dt = Math.min((now - last) / 1000, 0.1); // clamp after tab/throttle stalls
-      last = now;
-
-      const gpsFresh = gpsTravelled >= 0 && now - gpsAt < 6000;
-      if (gpsFresh) {
-        // Real driving: glide progress toward the live GPS position.
-        progress += (gpsTravelled - progress) * (1 - Math.exp(-dt / 0.5));
-      } else {
-        // No on-route GPS: simulate so the marker always moves.
-        progress = progress + simSpeed * dt;
-      }
-      progress = Math.max(0, Math.min(progress, routePath.total));
-
-      const p = locateAlongRoute(routePath, progress);
-      const heading = gpsFresh ? gpsHeading : p.heading;
-      smoothedHeading = smoothHeading(smoothedHeading, heading, 0.12);
-
-      setVehicle({ lat: p.lat, lng: p.lng });
-      setRemainingMeters(routePath.total - progress);
-      map.moveCamera({ center: { lat: p.lat, lng: p.lng }, zoom: 18, tilt: 55, heading: smoothedHeading });
-
-      if (routePath.total - progress < 20) {
-        setRemainingMeters(0);
-        setArrived(true);
-        setIsNavigating(false);
-        return;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-
-    raf = requestAnimationFrame(tick);
     return () => {
-      cancelAnimationFrame(raf);
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      animRef.current = 0;
       if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      google.maps.event.removeListener(dragListener);
     };
-  }, [isNavigating, routePath, map, route]);
+  }, [isNavigating, routePath, map, station]);
 
   const startNavigation = () => {
-    if (!routePath) return;
+    if (!routePath || !origin) return;
+    // Reset all live-nav refs and seed the puck at the real starting location.
+    renderedRef.current = origin;
+    targetRef.current = origin;
+    lastAcceptedRef.current = null;
+    const startHeading = bearing(origin, route!.points[Math.min(1, route!.points.length - 1)]);
+    headingRef.current = startHeading;
+    smoothHeadingRef.current = startHeading;
+    offRouteCountRef.current = 0;
+    arrivedRef.current = false;
+    gpsReadyRef.current = false;
+    hadOnRouteRef.current = false;
+    followingRef.current = true;
+    setShowRecenter(false);
+    setGpsReady(false);
+    setVehicle(origin);
     setArrived(false);
     setRemainingMeters(routePath.total);
+    if (map) {
+      map.moveCamera({ center: offsetPoint(origin, startHeading, CAMERA_LEAD_M), zoom: FOLLOW_ZOOM, tilt: FOLLOW_TILT, heading: startHeading });
+    }
     setIsNavigating(true);
   };
+
+  // Re-lock the camera onto the live position after a manual pan.
+  const recenter = useCallback(() => {
+    followingRef.current = true;
+    setShowRecenter(false);
+    const p = renderedRef.current;
+    if (map && p) {
+      map.moveCamera({ center: offsetPoint(p, smoothHeadingRef.current, CAMERA_LEAD_M), zoom: FOLLOW_ZOOM, tilt: FOLLOW_TILT, heading: smoothHeadingRef.current });
+    }
+  }, [map]);
 
   const stopNavigation = useCallback(() => {
     setIsNavigating(false);
     setVehicle(null);
     setRemainingMeters(null);
     setArrived(false);
+    setRerouting(false);
+    setShowRecenter(false);
+    renderedRef.current = null;
+    targetRef.current = null;
+    lastAcceptedRef.current = null;
+    arrivedRef.current = false;
+    hadOnRouteRef.current = false;
     if (map && route) {
       // Restore the north-up overview of the whole route.
       const bounds = new google.maps.LatLngBounds();
@@ -450,11 +590,44 @@ export default function NavigateRoute() {
       {/* ─── Back button ─── */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-6 left-4 z-30 w-11 h-11 rounded-full bg-surface/90 backdrop-blur-xl shadow-premium flex items-center justify-center transition-transform active:scale-90"
+        className="absolute top-6 left-4 z-30 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-surface/90 backdrop-blur-xl shadow-premium flex items-center justify-center transition-transform active:scale-90"
         aria-label="Back"
       >
         <ArrowLeft size={20} className="text-textPrimary" />
       </button>
+
+      {/* ─── Live status pill (rerouting / waiting for GPS) ─── */}
+      <AnimatePresence>
+        {isNavigating && (rerouting || !gpsReady) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-surface/95 backdrop-blur-xl shadow-premium rounded-full px-4 py-2"
+          >
+            <Loader2 size={15} className="text-primary animate-spin" />
+            <span className="text-[13px] font-semibold text-textPrimary">
+              {rerouting ? 'Rerouting…' : 'Waiting for GPS…'}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Re-centre button (after a manual pan, Google-Maps style) ─── */}
+      <AnimatePresence>
+        {isNavigating && showRecenter && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={recenter}
+            className="absolute bottom-48 right-4 z-30 w-12 h-12 rounded-full bg-surface/95 backdrop-blur-xl shadow-premium-lg flex items-center justify-center transition-transform active:scale-90"
+            aria-label="Re-centre map on your location"
+          >
+            <LocateFixed size={22} className="text-primary" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* ─── "Calculating route..." overlay ─── */}
       <AnimatePresence>
@@ -483,7 +656,7 @@ export default function NavigateRoute() {
             transition={{ type: 'spring', damping: 24, stiffness: 200 }}
             className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] pointer-events-none"
           >
-            <div className="max-w-md mx-auto bg-surface/95 backdrop-blur-xl shadow-premium-lg rounded-[28px] p-5 pointer-events-auto">
+            <div className="max-w-md mx-auto bg-surface/95 backdrop-blur-xl shadow-premium-lg rounded-[24px] sm:rounded-[28px] p-4 sm:p-5 pointer-events-auto">
               {/* Station + ETA row */}
               <div className="flex items-center gap-3.5">
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-primary/12 shrink-0">

@@ -34,7 +34,7 @@ export default function HowToUse() {
             ))}
           </div>
         </div>
-        <button onClick={() => navigate('/home')} className="btn-primary w-full h-14 rounded-full text-lg">{t('common.getStarted')}</button>
+        <button onClick={() => navigate('/')} className="btn-primary w-full h-14 rounded-full text-lg">{t('common.getStarted')}</button>
       </div>
     </div>
   );

@@ -26,11 +26,11 @@ export default function Profile() {
   };
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const handleLogout = async () => { await logout(); navigate('/home', { replace: true }); };
+  const handleLogout = async () => { await logout(); navigate('/', { replace: true }); };
 
   const confirmDeleteAccount = () => {
     api.delete('/auth/account')
-      .then(() => { queryClient.clear(); logout(); navigate('/home'); showToast(t('common.deleted') || 'Account deleted successfully', 'success'); setShowDeleteModal(false); })
+      .then(() => { queryClient.clear(); logout(); navigate('/'); showToast(t('common.deleted') || 'Account deleted successfully', 'success'); setShowDeleteModal(false); })
       .catch((e: any) => { showToast(e.response?.data?.message || t('common.deleteFailed') || 'Failed to delete account. Please try again.', 'error'); setShowDeleteModal(false); });
   };
 
@@ -38,28 +38,28 @@ export default function Profile() {
     <div className="flex flex-col flex-1 bg-background relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-[350px] bg-gradient-to-b from-info/10 to-transparent -z-10" />
 
-      <div className="pt-8 px-6 pb-20 relative z-10 max-w-2xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-6">
-          <button onClick={() => navigate('/home')} className="w-11 h-11 bg-surface rounded-full flex items-center justify-center shadow-premium-sm text-textPrimary"><ArrowLeft size={20} /></button>
-          <h1 className="font-semibold text-xl text-textPrimary">{t('profile.title')}</h1>
-          <div className="w-11 h-11" />
+      <div className="pt-6 sm:pt-8 px-4 sm:px-6 pb-20 relative z-10 max-w-2xl mx-auto w-full">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <button onClick={() => navigate('/')} className="w-10 h-10 sm:w-11 sm:h-11 bg-surface rounded-full flex items-center justify-center shadow-premium-sm text-textPrimary"><ArrowLeft size={18} /></button>
+          <h1 className="font-semibold text-lg sm:text-xl text-textPrimary">{t('profile.title')}</h1>
+          <div className="w-10 h-10 sm:w-11 sm:h-11" />
         </div>
 
         {isLoading ? (
           <div className="flex justify-center py-24"><div className="w-9 h-9 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>
         ) : token && user ? (
-          <div className="premium-card p-5 mb-8 flex items-center justify-between">
-            <div className="flex items-center flex-1 pr-4">
-              <div className="w-[60px] h-[60px] rounded-full bg-avatarBg flex items-center justify-center overflow-hidden shrink-0">
+          <div className="premium-card p-4 sm:p-5 mb-6 sm:mb-8 flex items-center justify-between">
+            <div className="flex items-center flex-1 pr-3 sm:pr-4">
+              <div className="w-[50px] h-[50px] sm:w-[60px] sm:h-[60px] rounded-full bg-avatarBg flex items-center justify-center overflow-hidden shrink-0">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.displayName} className="w-full h-full object-cover" />
                 ) : (
                   <span className="font-semibold text-2xl text-primary">{user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}</span>
                 )}
               </div>
-              <div className="ml-4 flex-1 min-w-0">
-                <h2 className="font-semibold text-lg text-textPrimary mb-0.5 truncate">{user.displayName}</h2>
-                <p className="font-normal text-sm text-textMuted truncate">{user.email}</p>
+              <div className="ml-3 sm:ml-4 flex-1 min-w-0">
+                <h2 className="font-semibold text-base sm:text-lg text-textPrimary mb-0.5 truncate">{user.displayName}</h2>
+                <p className="font-normal text-[13px] sm:text-sm text-textMuted truncate">{user.email}</p>
               </div>
             </div>
             <button onClick={() => navigate('/profile/edit')} className="p-2 text-textMuted hover:text-textPrimary transition-colors"><Edit2 size={20} /></button>

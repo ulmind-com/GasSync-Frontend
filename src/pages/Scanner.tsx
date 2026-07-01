@@ -93,7 +93,7 @@ const Scanner = () => {
       queryClient.invalidateQueries({ queryKey: ['home-community-nearby'] });
       queryClient.invalidateQueries({ queryKey: ['home-station-prices'] });
       showToast('🎉 Price reported! Your bill is now live in the Community tab.', 'success');
-      setTimeout(() => { if (googlePlaceId) navigate(`/station/${googlePlaceId}`); else navigate('/home'); }, 900);
+      setTimeout(() => { if (googlePlaceId) navigate(`/station/${googlePlaceId}`); else navigate('/'); }, 900);
     },
     onError: (error: any) => { showToast(error.response?.data?.message || 'Could not save price data.', 'error'); },
   });
@@ -118,10 +118,10 @@ const Scanner = () => {
   if (!token) return <div className="flex-1 flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
 
   return (
-    <div className="w-full max-w-xl mx-auto pb-32">
-      <div className="px-4">
-        <h1 className="text-2xl font-bold text-textPrimary mb-2">{t('scanner.title') || 'Scanner'}</h1>
-        <p className="text-sm text-textMuted mb-6">{t('scanner.instruction') || 'Scan your receipt.'}</p>
+    <div className="w-full max-w-xl mx-auto pb-28 sm:pb-32">
+      <div className="px-0 sm:px-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-textPrimary mb-1.5 sm:mb-2">{t('scanner.title') || 'Scanner'}</h1>
+        <p className="text-[13px] sm:text-sm text-textMuted mb-4 sm:mb-6">{t('scanner.instruction') || 'Scan your receipt.'}</p>
 
         {stationName && (
           <div className="flex items-center gap-3 premium-card p-4 mb-5 border-primary/20">
@@ -135,16 +135,16 @@ const Scanner = () => {
         )}
 
         {!imagePreview ? (
-          <div className="flex gap-4 mb-8">
+          <div className="flex gap-3 sm:gap-4 mb-6 sm:mb-8">
             <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={handleFileChange} />
             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
-            <button onClick={() => cameraInputRef.current?.click()} className="flex-1 premium-card premium-card-hover p-6 flex flex-col items-center justify-center">
-              <div className="w-14 h-14 rounded-full bg-avatarBg flex items-center justify-center mb-3"><Camera size={24} className="text-primary" /></div>
-              <span className="font-semibold text-sm text-textPrimary text-center">{t('scanner.takePhoto') || 'Take Photo'}</span>
+            <button onClick={() => cameraInputRef.current?.click()} className="flex-1 premium-card premium-card-hover p-4 sm:p-6 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-avatarBg flex items-center justify-center mb-2 sm:mb-3"><Camera size={22} className="text-primary" /></div>
+              <span className="font-semibold text-[13px] sm:text-sm text-textPrimary text-center">{t('scanner.takePhoto') || 'Take Photo'}</span>
             </button>
-            <button onClick={() => fileInputRef.current?.click()} className="flex-1 premium-card premium-card-hover p-6 flex flex-col items-center justify-center">
-              <div className="w-14 h-14 rounded-full bg-avatarBg flex items-center justify-center mb-3"><ImageIcon size={24} className="text-primary" /></div>
-              <span className="font-semibold text-sm text-textPrimary text-center">{t('scanner.uploadFile') || 'Upload File'}</span>
+            <button onClick={() => fileInputRef.current?.click()} className="flex-1 premium-card premium-card-hover p-4 sm:p-6 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-avatarBg flex items-center justify-center mb-2 sm:mb-3"><ImageIcon size={22} className="text-primary" /></div>
+              <span className="font-semibold text-[13px] sm:text-sm text-textPrimary text-center">{t('scanner.uploadFile') || 'Upload File'}</span>
             </button>
           </div>
         ) : !extractedData ? (

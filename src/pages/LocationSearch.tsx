@@ -107,12 +107,12 @@ export default function LocationSearch() {
       </div>
 
       {/* Header Overlay */}
-      <div className="relative z-10 w-full pt-6 pb-4 px-4 glass shadow-glass-sm flex flex-col gap-3 rounded-b-2xl">
+      <div className="relative z-10 w-full pt-4 sm:pt-6 pb-3 sm:pb-4 px-3 sm:px-4 glass shadow-glass-sm flex flex-col gap-2 sm:gap-3 rounded-b-2xl">
         <div className="flex items-center">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-surface shadow-sm flex items-center justify-center text-textSecondary hover:bg-surfaceMuted transition-colors">
+          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-surface shadow-sm flex items-center justify-center text-textSecondary hover:bg-surfaceMuted transition-colors shrink-0">
             <ArrowLeft size={20} />
           </button>
-          <div className="ml-3 flex-1 premium-input flex items-center px-4 py-3">
+          <div className="ml-2 sm:ml-3 flex-1 premium-input flex items-center px-3 sm:px-4 py-2 sm:py-3 h-10 sm:h-12 rounded-xl">
             <Search size={18} className="text-textMuted shrink-0" />
             <input type="text" className="bg-transparent border-none outline-none w-full ml-3 text-[15px] text-textPrimary placeholder-textMuted" placeholder="Search location..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
             {isSearching && <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0"></div>}
@@ -131,8 +131,8 @@ export default function LocationSearch() {
         )}
       </div>
 
-      <div className="absolute bottom-[90px] left-0 right-0 px-4 z-10">
-        <button onClick={handleConfirmLocation} className="btn-primary w-full rounded-full py-4 text-[16px] shadow-glow-primary">
+      <div className="absolute bottom-[calc(90px+env(safe-area-inset-bottom,0px))] sm:bottom-[90px] left-0 right-0 px-4 z-10">
+        <button onClick={handleConfirmLocation} className="btn-primary w-full rounded-[24px] sm:rounded-full h-[52px] sm:h-[56px] text-[15px] sm:text-[16px] shadow-glow-primary">
           Set Live Location
         </button>
       </div>

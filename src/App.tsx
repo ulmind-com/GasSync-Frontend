@@ -42,10 +42,10 @@ function App() {
       <div className="w-full h-full min-h-screen app-ambient text-textPrimary font-sans relative overflow-x-hidden flex flex-col">
         <CursorGlowWithVisibility />
         <Navbar />
-        <main className="flex-1 w-full max-w-7xl mx-auto px-0 sm:px-4 lg:px-8 pb-10 pt-24">
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-4 lg:px-8 pb-24 sm:pb-10 pt-4 sm:pt-24">
           <Routes>
-            <Route path="/" element={<Navigate to="/home" replace />} />
-            <Route path="/home" element={<Home />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="/map" element={<MapView />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/profile" element={<Profile />} />

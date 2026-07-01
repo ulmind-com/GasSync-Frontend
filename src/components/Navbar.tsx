@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Compass, MapPin, Heart, User, Bell, Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
@@ -13,17 +13,91 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { isDark, toggleTheme } = useThemeStore();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const tabs = [
-    { name: t('navbar.home') || 'Home', path: '/home', icon: Compass },
+    { name: t('navbar.home') || 'Home', path: '/', icon: Compass },
     { name: t('navbar.map') || 'Map', path: '/map', icon: MapPin },
     { name: t('navbar.favorites') || 'Favorites', path: '/favorites', icon: Heart },
   ];
 
-  if (['/login', '/register', '/auth/forgot-password'].includes(location.pathname) || location.pathname === '/') {
+  if (['/login', '/register', '/auth/forgot-password'].includes(location.pathname)) {
     return null;
   }
 
+  // ─── Mobile Bottom Tab Bar ───
+  if (isMobile) {
+    const mobileTabs = [
+      ...tabs,
+      { name: t('navbar.profile') || 'Profile', path: '/profile', icon: User },
+    ];
+
+    return (
+      <nav className="mobile-tab-bar" style={{
+        boxShadow: isDark
+          ? '0 -1px 20px -4px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04)'
+          : '0 -1px 20px -4px rgba(0,0,0,0.06), 0 0 0 1px rgba(25,28,33,0.04)',
+      }}>
+        <div className="flex items-center justify-around px-2">
+          {mobileTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = tab.path === '/' ? location.pathname === '/' : location.pathname.startsWith(tab.path);
+            
+            return (
+              <NavLink
+                key={tab.name}
+                to={tab.path}
+                className={`mobile-tab-item ${isActive ? 'active' : 'text-textMuted'}`}
+              >
+                <motion.div
+                  whileTap={{ scale: 0.85 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                >
+                  {tab.path === '/profile' && user?.avatarUrl ? (
+                    <div className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-colors ${isActive ? 'border-primary' : 'border-transparent'}`}>
+                      <img src={user.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                  )}
+                </motion.div>
+                <span className={`mobile-tab-label ${isActive ? 'font-bold' : 'font-medium'}`}>
+                  {tab.name}
+                </span>
+              </NavLink>
+            );
+          })}
+          
+          {/* Notification bell in mobile tab bar */}
+          <button
+            onClick={() => navigate('/notifications')}
+            className={`mobile-tab-item ${location.pathname === '/notifications' ? 'active' : 'text-textMuted'}`}
+          >
+            <motion.div
+              whileTap={{ scale: 0.85 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+              className="relative"
+            >
+              <Bell size={22} strokeWidth={location.pathname === '/notifications' ? 2.5 : 2} />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-error rounded-full border border-surface"></span>
+            </motion.div>
+            <span className={`mobile-tab-label ${location.pathname === '/notifications' ? 'font-bold' : 'font-medium'}`}>
+              Alerts
+            </span>
+          </button>
+        </div>
+      </nav>
+    );
+  }
+
+  // ─── Desktop Top Floating Navbar ───
   return (
     <AnimatePresence mode="wait">
       <motion.nav
@@ -41,7 +115,7 @@ const Navbar = () => {
           {/* Logo & Brand */}
           <div 
             className="flex items-center cursor-pointer gap-2 shrink-0" 
-            onClick={() => navigate('/home')}
+            onClick={() => navigate('/')}
           >
             <Magnetic strength={0.25}>
             <img src="/gassync_logo.png" alt="GasSync" className="w-9 h-9 rounded-xl object-contain" />
@@ -53,7 +127,7 @@ const Navbar = () => {
           <div className="flex items-center justify-center space-x-1 sm:space-x-2 md:space-x-4 flex-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
-              const isActive = location.pathname.startsWith(tab.path);
+              const isActive = tab.path === '/' ? location.pathname === '/' : location.pathname.startsWith(tab.path);
               
               return (
                 <NavLink

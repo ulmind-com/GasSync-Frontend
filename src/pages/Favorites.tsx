@@ -17,9 +17,9 @@ export default function Favorites() {
     <div className="flex flex-col min-h-screen bg-background pb-24 relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-72 bg-gradient-to-b from-info/10 to-transparent -z-10" />
 
-      <div className="px-6 pt-10 relative z-10">
-        <h1 className="reveal font-heading font-bold text-2xl text-textPrimary mb-2">{t('favorites.title')}</h1>
-        <p className="reveal font-normal text-sm text-textSecondary mb-8">Your saved gas stations will appear here.</p>
+      <div className="px-4 sm:px-6 pt-6 sm:pt-10 relative z-10">
+        <h1 className="reveal font-heading font-bold text-xl sm:text-2xl text-textPrimary mb-1.5 sm:mb-2">{t('favorites.title')}</h1>
+        <p className="reveal font-normal text-[13px] sm:text-sm text-textSecondary mb-6 sm:mb-8">Your saved gas stations will appear here.</p>
 
         {favorites.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-20">
@@ -44,9 +44,9 @@ export default function Favorites() {
                 className="flex flex-row p-3 items-center text-left w-full"
               >
                 {station.photoRef ? (
-                  <img src={getPhotoUrl(station.photoRef, 200)} alt={station.name} className="w-16 h-16 rounded-xl mr-4 object-cover shrink-0" />
+                  <img src={getPhotoUrl(station.photoRef, 200)} alt={station.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl mr-3 sm:mr-4 object-cover shrink-0" />
                 ) : (
-                  <div className="w-16 h-16 rounded-xl bg-avatarBg flex items-center justify-center mr-4 shrink-0">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-avatarBg flex items-center justify-center mr-3 sm:mr-4 shrink-0">
                     <MapPin size={24} className="text-primary" />
                   </div>
                 )}

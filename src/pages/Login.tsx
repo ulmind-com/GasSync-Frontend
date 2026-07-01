@@ -33,7 +33,7 @@ export default function Login() {
         if (returnTo) {
           navigate(returnTo, { replace: true });
         } else {
-          navigate('/home', { replace: true });
+          navigate('/', { replace: true });
         }
       } catch (error: any) {
         setError(error.response?.data?.message || 'Google authentication failed');
@@ -62,7 +62,7 @@ export default function Login() {
       if (returnTo) {
         navigate(returnTo, { replace: true });
       } else {
-        navigate('/home', { replace: true });
+        navigate('/', { replace: true });
       }
     } catch (error: any) {
       setError(error.response?.data?.message || 'Something went wrong');
@@ -76,13 +76,13 @@ export default function Login() {
       {/* Background Gradient */}
       <div className="absolute top-0 left-0 right-0 h-full app-ambient -z-10" />
 
-      <div className="flex flex-col flex-1 px-6 justify-center max-w-md mx-auto w-full py-12">
-        <div className="flex flex-col items-center mb-12">
-          <div className="w-20 h-20 rounded-[40px] liquid-glass shadow-premium-lg mb-6 overflow-hidden flex items-center justify-center">
+      <div className="flex flex-col flex-1 px-5 sm:px-6 justify-center max-w-md mx-auto w-full py-8 sm:py-12">
+        <div className="flex flex-col items-center mb-8 sm:mb-12">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[32px] sm:rounded-[40px] liquid-glass shadow-premium-lg mb-4 sm:mb-6 overflow-hidden flex items-center justify-center">
             <img src="/gassync_logo.png" alt="GasSync Logo" className="w-full h-full object-cover" />
           </div>
-          <h1 className="font-bold text-3xl text-textPrimary mb-2">{t('auth.signInTitle')}</h1>
-          <p className="font-normal text-base text-textSecondary">{t('auth.signInSubtitle')}</p>
+          <h1 className="font-bold text-2xl sm:text-3xl text-textPrimary mb-1.5 sm:mb-2">{t('auth.signInTitle')}</h1>
+          <p className="font-normal text-[14px] sm:text-base text-textSecondary">{t('auth.signInSubtitle')}</p>
         </div>
 
         <form onSubmit={handleLogin} className="w-full flex flex-col">
@@ -92,7 +92,7 @@ export default function Login() {
             </div>
           )}
           
-          <div className="premium-input flex items-center h-[60px] mb-4 px-5">
+          <div className="premium-input flex items-center h-[52px] sm:h-[60px] mb-3 sm:mb-4 px-4 sm:px-5">
             <Mail size={20} className="text-textMuted mr-3" />
             <input
               type="email"
@@ -104,7 +104,7 @@ export default function Login() {
             />
           </div>
 
-          <div className="premium-input flex items-center h-[60px] mb-4 px-5">
+          <div className="premium-input flex items-center h-[52px] sm:h-[60px] mb-3 sm:mb-4 px-4 sm:px-5">
             <Lock size={20} className="text-textMuted mr-3" />
             <input
               type={showPassword ? 'text' : 'password'}
@@ -119,14 +119,14 @@ export default function Login() {
             </button>
           </div>
 
-          <button type="button" onClick={() => navigate('/auth/forgot-password')} className="self-end mb-6 text-sm font-medium text-primary hover:text-primary-strong transition-colors">
+          <button type="button" onClick={() => navigate('/auth/forgot-password')} className="self-end mb-4 sm:mb-6 text-sm font-medium text-primary hover:text-primary-strong transition-colors">
             {t('auth.forgotPassword')}
           </button>
 
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full h-[60px] rounded-[30px] text-lg disabled:opacity-70 disabled:cursor-not-allowed"
+            className="btn-primary w-full h-[52px] sm:h-[60px] rounded-[26px] sm:rounded-[30px] text-base sm:text-lg disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {loading ? (
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -135,7 +135,7 @@ export default function Login() {
             )}
           </button>
 
-          <div className="flex items-center my-6">
+          <div className="flex items-center my-4 sm:my-6">
             <div className="flex-1 h-px bg-border" />
             <span className="mx-4 font-medium text-sm text-textMuted">OR</span>
             <div className="flex-1 h-px bg-border" />

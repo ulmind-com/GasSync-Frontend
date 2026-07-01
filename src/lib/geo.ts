@@ -109,6 +109,33 @@ export function smoothHeading(current: number, target: number, factor: number): 
   return (current + diff * factor + 360) % 360;
 }
 
+/** Smallest signed difference between two headings, in degrees (−180…180). */
+export function headingDelta(a: number, b: number): number {
+  return ((b - a + 540) % 360) - 180;
+}
+
+/**
+ * Point reached by travelling `metres` along `headingDeg` from `origin`.
+ * Used to push the follow-camera target slightly ahead of the vehicle so the
+ * user sits near the bottom of the screen, Google-Maps style.
+ */
+export function offsetPoint(origin: LatLng, headingDeg: number, metres: number): LatLng {
+  const dr = metres / R;
+  const br = toRad(headingDeg);
+  const lat1 = toRad(origin.lat);
+  const lng1 = toRad(origin.lng);
+  const lat2 = Math.asin(
+    Math.sin(lat1) * Math.cos(dr) + Math.cos(lat1) * Math.sin(dr) * Math.cos(br)
+  );
+  const lng2 =
+    lng1 +
+    Math.atan2(
+      Math.sin(br) * Math.sin(dr) * Math.cos(lat1),
+      Math.cos(dr) - Math.sin(lat1) * Math.sin(lat2)
+    );
+  return { lat: toDeg(lat2), lng: toDeg(lng2) };
+}
+
 export interface RouteSnap {
   lat: number;
   lng: number;

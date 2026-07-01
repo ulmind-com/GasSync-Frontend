@@ -193,17 +193,17 @@ export default function StationDetails() {
   return (
     <div className="flex flex-col flex-1 bg-background relative overflow-hidden pb-10 w-full">
       {/* ─── Header Image ─── */}
-      <div className="relative w-full h-[55vh] min-h-[420px] z-0">
-        <div className="absolute top-0 left-0 right-0 p-5 z-20 flex justify-between items-center">
-          <button onClick={() => navigate(-1)} className="w-11 h-11 rounded-full flex items-center justify-center glass shadow-glass-sm transition-all hover:scale-105 active:scale-95">
-            <ArrowLeft size={20} className="text-textPrimary" />
+      <div className="relative w-full h-[40vh] sm:h-[55vh] min-h-[280px] sm:min-h-[420px] z-0">
+        <div className="absolute top-0 left-0 right-0 p-4 sm:p-5 z-20 flex justify-between items-center">
+          <button onClick={() => navigate(-1)} className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center glass shadow-glass-sm transition-all hover:scale-105 active:scale-95">
+            <ArrowLeft size={18} className="text-textPrimary" />
           </button>
-          <div className="flex gap-3">
-            <button onClick={handleShare} className="w-11 h-11 rounded-full flex items-center justify-center glass shadow-glass-sm transition-all hover:scale-105 active:scale-95">
-              <Share2 size={20} className="text-textPrimary" />
+          <div className="flex gap-2 sm:gap-3">
+            <button onClick={handleShare} className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center glass shadow-glass-sm transition-all hover:scale-105 active:scale-95">
+              <Share2 size={18} className="text-textPrimary" />
             </button>
-            <button onClick={handleToggleFavorite} className="w-11 h-11 rounded-full flex items-center justify-center glass shadow-glass-sm transition-all hover:scale-105 active:scale-95">
-              <Heart size={20} className={isFavorite ? "text-error fill-error" : "text-textPrimary"} />
+            <button onClick={handleToggleFavorite} className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center glass shadow-glass-sm transition-all hover:scale-105 active:scale-95">
+              <Heart size={18} className={isFavorite ? "text-error fill-error" : "text-textPrimary"} />
             </button>
           </div>
         </div>
@@ -220,24 +220,24 @@ export default function StationDetails() {
       </div>
 
       {/* ─── Main Content (2-Column Desktop) ─── */}
-      <div className="max-w-6xl mx-auto w-full px-5 pb-10 relative z-10 -mt-20 flex flex-col md:flex-row gap-8">
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-5 pb-10 relative z-10 -mt-16 sm:-mt-20 flex flex-col md:flex-row gap-5 sm:gap-8">
         {/* Left Column */}
         <div className="flex-1">
-          <SpotlightCard className="liquid-glass rounded-[32px] mb-6 relative" spotlightColor="rgb(var(--color-primary) / 0.05)">
-          <div className="p-8">
-            <div className="flex items-start justify-between mb-4">
-              <h1 className="font-bold text-[32px] text-textPrimary leading-tight mr-4 tracking-tight">{station.name}</h1>
+          <SpotlightCard className="liquid-glass rounded-[24px] sm:rounded-[32px] mb-4 sm:mb-6 relative" spotlightColor="rgb(var(--color-primary) / 0.05)">
+          <div className="p-5 sm:p-8">
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
+              <h1 className="font-bold text-[24px] sm:text-[32px] text-textPrimary leading-tight mr-3 sm:mr-4 tracking-tight">{station.name}</h1>
               <div className="flex items-center gap-1.5 bg-gradient-to-r from-[#FFB800] to-[#F5A623] px-3.5 py-2 rounded-2xl shadow-sm shrink-0 mt-1">
                 <Star size={16} className="text-white fill-white" />
                 <span className="font-bold text-[15px] text-white">{station.rating > 0 ? station.rating.toFixed(1) : 'New'}</span>
               </div>
             </div>
 
-            <div className="flex items-center mb-8 text-textSecondary">
-              <div className="w-8 h-8 rounded-full bg-surfaceMuted flex items-center justify-center shrink-0 mr-3">
-                <MapPin size={16} className="text-textSecondary" />
+            <div className="flex items-center mb-5 sm:mb-8 text-textSecondary">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-surfaceMuted flex items-center justify-center shrink-0 mr-2.5 sm:mr-3">
+                <MapPin size={14} className="text-textSecondary" />
               </div>
-              <span className="font-medium text-[15px]">{station.address}</span>
+              <span className="font-medium text-[13px] sm:text-[15px]">{station.address}</span>
             </div>
 
             <div className="flex gap-3">
@@ -262,9 +262,9 @@ export default function StationDetails() {
           </SpotlightCard>
 
           {/* Amenities */}
-          <div className="reveal liquid-glass p-8 rounded-[32px] mb-6">
-            <h2 className="font-heading font-bold text-2xl text-textPrimary mb-6 tracking-tight">{t('station.amenities')}</h2>
-            <div className="flex flex-wrap gap-4">
+          <div className="reveal liquid-glass p-5 sm:p-8 rounded-[24px] sm:rounded-[32px] mb-4 sm:mb-6">
+            <h2 className="font-heading font-bold text-xl sm:text-2xl text-textPrimary mb-4 sm:mb-6 tracking-tight">{t('station.amenities')}</h2>
+            <div className="flex flex-wrap gap-3 sm:gap-4">
               {(() => {
                 if (!station.types) return null;
                 const seenLabels = new Set<string>();
@@ -311,16 +311,16 @@ export default function StationDetails() {
         <div className="w-full md:w-[400px] shrink-0">
           <button
             onClick={() => navigate(`/scanner?googlePlaceId=${id}&stationName=${encodeURIComponent(station?.name || '')}`)}
-            className="btn-primary w-full h-[52px] rounded-2xl mb-6"
+            className="btn-primary w-full h-[48px] sm:h-[52px] rounded-2xl mb-4 sm:mb-6"
           >
             <Fuel size={20} className="mr-2" />
             <span className="font-bold text-[15px] tracking-wide">{t('station.updatePrice') || 'Update Price'}</span>
           </button>
 
-          <SpotlightCard className="liquid-glass rounded-[32px] mb-6 reveal" spotlightColor="rgb(var(--color-info) / 0.04)">
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-heading font-bold text-2xl text-textPrimary tracking-tight">{t('station.pricesAndReports') || 'Prices & Reports'}</h2>
+          <SpotlightCard className="liquid-glass rounded-[24px] sm:rounded-[32px] mb-4 sm:mb-6 reveal" spotlightColor="rgb(var(--color-info) / 0.04)">
+          <div className="p-5 sm:p-8">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="font-heading font-bold text-xl sm:text-2xl text-textPrimary tracking-tight">{t('station.pricesAndReports') || 'Prices & Reports'}</h2>
               {priceData?.fetchedAt && (
                 <div className="bg-surfaceMuted px-2.5 py-1 rounded-lg">
                   <span className="font-medium text-xs text-textMuted">{getRelativeTime(priceData.fetchedAt)}</span>
@@ -339,15 +339,15 @@ export default function StationDetails() {
 
             {priceTab === 'market' ? (
               priceData?.fuelPrices && priceData.fuelPrices.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   {[...priceData.fuelPrices].sort((a: any, b: any) => fuelRank(a.type) - fuelRank(b.type)).map((fp: any, idx: number) => {
                     const mapped = FUEL_TYPE_MAP[fp.type] || { label: fp.type };
                     return (
                       <div key={idx} className="flex premium-card overflow-hidden">
-                        <div className="w-1.5 h-full bg-primary" />
-                        <div className="p-4 flex-1">
-                          <p className="font-medium text-[13px] text-textMuted mb-1">{mapped.label}</p>
-                          <p className="font-normal text-2xl text-textPrimary tracking-tight">${fp.price.toFixed(2)}</p>
+                        <div className="w-1 sm:w-1.5 h-full bg-primary" />
+                        <div className="p-3 sm:p-4 flex-1">
+                          <p className="font-medium text-[12px] sm:text-[13px] text-textMuted mb-0.5 sm:mb-1">{mapped.label}</p>
+                          <p className="font-normal text-xl sm:text-2xl text-textPrimary tracking-tight">${fp.price.toFixed(2)}</p>
                         </div>
                       </div>
                     );
