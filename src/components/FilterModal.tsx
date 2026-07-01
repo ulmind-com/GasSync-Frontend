@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigation, TrendingDown, TrendingUp, X, RotateCcw } from 'lucide-react';
+import { Navigation, TrendingDown, TrendingUp, Check, X, RotateCcw } from 'lucide-react';
 import { useLocationStore } from '../store/locationStore';
 import type { StationFilter, SortBy } from '../store/locationStore';
 
