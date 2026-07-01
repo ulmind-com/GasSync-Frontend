@@ -102,7 +102,7 @@ export default function StationDetails() {
   const { data: priceData, refetch: refetchPrices } = useQuery({
     queryKey: ['station-prices', station?.id],
     queryFn: async () => {
-      const res = await api.get(`/prices/by-station?name=${encodeURIComponent(station!.name)}&lat=${station!.lat}&lon=${station!.lon}`);
+      const res = await api.get(`/prices/by-station?name=${encodeURIComponent(station!.name)}&lat=${station!.lat}&lon=${station!.lon}&stationId=${station!.id}`);
       return res.data?.data;
     },
     enabled: !!station,
