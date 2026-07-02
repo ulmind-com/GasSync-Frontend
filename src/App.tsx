@@ -27,6 +27,7 @@ import Language from './pages/profile/Language';
 import Feedback from './pages/profile/Feedback';
 import HowToUse from './pages/profile/HowToUse';
 import Help from './pages/profile/Help';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 // Placeholder Pages
 const ForgotPassword = () => <div className="p-4 h-screen bg-background text-textPrimary">Forgot Password Page</div>;
@@ -68,6 +69,7 @@ function App() {
             <Route path="/profile/feedback" element={<Feedback />} />
             <Route path="/profile/how-to-use" element={<HowToUse />} />
             <Route path="/profile/help" element={<Help />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           </Routes>
         </main>
         <Footer />
