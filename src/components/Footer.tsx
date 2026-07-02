@@ -30,8 +30,8 @@ const Footer = () => {
         {/* Brand Section */}
         <div className="space-y-4 md:col-span-1">
           <Link to="/" className="flex items-center space-x-2 text-primary hover:opacity-80 transition-opacity">
-            <Fuel className="w-6 h-6" />
-            <span className="text-xl font-bold tracking-tight">GasSync</span>
+            <img src="/gassync_logo.png" alt="GasSync" className="w-8 h-8 rounded-lg object-contain" />
+            <span className="text-xl font-bold tracking-tight text-textPrimary">GasSync</span>
           </Link>
           <p className="text-sm text-textSecondary leading-relaxed">
             Your reliable companion for finding CNG stations and planning routes efficiently. Drive further, smarter, and greener.
@@ -76,8 +76,6 @@ const Footer = () => {
           <h3 className="text-sm font-semibold text-textPrimary uppercase tracking-wider">Legal</h3>
           <ul className="space-y-2 text-sm text-textSecondary">
             <li><Link to="/privacy-policy" className="hover:text-primary transition-colors font-medium">Privacy Policy</Link></li>
-            <li><Link to="#" className="hover:text-primary transition-colors">Terms of Service</Link></li>
-            <li><Link to="#" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
           </ul>
         </div>
       </div>

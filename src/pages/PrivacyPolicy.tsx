@@ -30,7 +30,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-xl font-semibold text-textPrimary mb-2">2. Information We Collect</h2>
               <p>
-                <strong>Location Data:</strong> GasSync requires access to your location data to provide you with the most accurate information regarding nearby CNG stations. We collect this data only when you authorize it.
+                <strong>Location Data:</strong> GasSync requires access to your location data to provide you with the most accurate information regarding nearby Gas stations. We collect this data only when you authorize it.
               </p>
               <p className="mt-2">
                 <strong>Account Information:</strong> When you register, we may collect your name, email address, and vehicle details to personalize your experience.
@@ -44,7 +44,7 @@ const PrivacyPolicy = () => {
               </p>
               <ul className="list-disc list-inside mt-2 space-y-1 ml-4">
                 <li>Provide, operate, and maintain our services.</li>
-                <li>Show you the nearest CNG stations and route navigation.</li>
+                <li>Show you the nearest Gas stations and route navigation.</li>
                 <li>Improve and personalize our app's user experience.</li>
                 <li>Communicate with you regarding updates, support, and promotional offers.</li>
               </ul>
