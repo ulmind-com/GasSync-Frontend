@@ -84,7 +84,12 @@ const Footer = () => {
 
       <div className="max-w-7xl mx-auto pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-textSecondary/60">
         <p>&copy; {new Date().getFullYear()} GasSync. All rights reserved.</p>
-        <p>Made with ❤️ for a greener tomorrow.</p>
+        <div className="flex items-center gap-1.5">
+          <span>Developed by</span>
+          <a href="https://www.ulmind.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+            <img src="/ulmind.png" alt="ULMiND" className="h-5 w-auto" />
+          </a>
+        </div>
       </div>
     </footer>
   );
