@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Star, Chrome } from 'lucide-react';
+import { X, Star, Globe } from 'lucide-react';
 
 const SmartAppBanner = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -91,7 +91,7 @@ const SmartAppBanner = () => {
             onClick={handleDismiss}
             className="w-full py-3.5 bg-surfaceMuted/50 text-textPrimary text-base font-medium rounded-2xl hover:bg-surfaceMuted active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
-            <Chrome size={20} className="text-textSecondary" />
+            <Globe size={20} className="text-textSecondary" />
             Continue in Browser
           </button>
         </div>
