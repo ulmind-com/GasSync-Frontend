@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import { CursorGlowWithVisibility } from './components/CursorEffects';
+import SmartAppBanner from './components/SmartAppBanner';
 import { useAuthStore } from './store/authStore';
 
 import Home from './pages/Home';
@@ -45,6 +46,7 @@ function App() {
       <ScrollToTop />
       <div className="w-full h-full min-h-screen app-ambient text-textPrimary font-sans relative overflow-x-hidden flex flex-col">
         <CursorGlowWithVisibility />
+        <SmartAppBanner />
         <Navbar />
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-4 lg:px-8 pb-24 sm:pb-10 pt-4 sm:pt-24">
           <Routes>

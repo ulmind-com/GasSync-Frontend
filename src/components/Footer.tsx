@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Fuel, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
+import lottie from 'lottie-web';
+import { useToast } from './Toast';
 
 const TwitterIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -20,7 +22,37 @@ const LinkedinIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.gassync.fuel&pcampaignid=web_share';
+
 const Footer = () => {
+  const { showToast } = useToast();
+  const playStoreRef = useRef<HTMLDivElement>(null);
+  const appStoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!playStoreRef.current) return;
+    const anim = lottie.loadAnimation({
+      container: playStoreRef.current,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: '/GooglePlayButton.json',
+    });
+    return () => anim.destroy();
+  }, []);
+
+  useEffect(() => {
+    if (!appStoreRef.current) return;
+    const anim = lottie.loadAnimation({
+      container: appStoreRef.current,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: '/AppStore.json',
+    });
+    return () => anim.destroy();
+  }, []);
+
   return (
     <footer className="w-full relative mt-auto bg-surface/30 backdrop-blur-xl border-t border-white/5 pt-12 pb-6 px-4 sm:px-8">
       {/* Decorative gradient blur */}
@@ -34,7 +66,7 @@ const Footer = () => {
             <span className="text-xl font-bold tracking-tight text-textPrimary">GasSync</span>
           </Link>
           <p className="text-sm text-textSecondary leading-relaxed">
-            Your reliable companion for finding CNG stations and planning routes efficiently. Drive further, smarter, and greener.
+            Your reliable companion for finding Gas stations and planning routes efficiently. Drive further, smarter, and greener.
           </p>
           <div className="flex items-center space-x-4 pt-2">
             <a href="#" className="text-textSecondary hover:text-primary transition-colors p-2 bg-white/5 rounded-full hover:bg-primary/10">
@@ -46,6 +78,26 @@ const Footer = () => {
             <a href="#" className="text-textSecondary hover:text-primary transition-colors p-2 bg-white/5 rounded-full hover:bg-primary/10">
               <LinkedinIcon className="w-4 h-4" />
             </a>
+          </div>
+          <div className="flex items-center gap-3 mt-4">
+            {/* Google Play Lottie Button */}
+            <a
+              href={PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-36 hover:scale-105 active:scale-95 transition-transform duration-200"
+              aria-label="Get it on Google Play"
+            >
+              <div ref={playStoreRef} className="w-full" />
+            </a>
+            {/* App Store Lottie Button */}
+            <button
+              onClick={() => showToast('Coming soon to the App Store!', 'info')}
+              className="block w-36 hover:scale-105 active:scale-95 transition-transform duration-200"
+              aria-label="Download on the App Store"
+            >
+              <div ref={appStoreRef} className="w-full" />
+            </button>
           </div>
         </div>
 
