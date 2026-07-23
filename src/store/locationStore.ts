@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { api } from '../lib/axios';
 
 export type StationFilter = 'all' | 'open' | 'top_rated' | 'car_wash';
 export type SortBy = 'nearby' | 'price_low' | 'price_high';
@@ -26,7 +27,11 @@ export const useLocationStore = create<LocationState>((set) => ({
   activeFilter: 'all',
   sortBy: 'nearby',
   selectedFuel: 'REGULAR_UNLEADED',
-  setLocation: (lat, lon, name) => set({ lat, lon, name }),
+  setLocation: (lat, lon, name) => {
+    set({ lat, lon, name });
+    // Fire-and-forget: persist to backend for admin visibility
+    api.put('/auth/me/location', { lat, lon }).catch(() => {});
+  },
   setRadius: (radiusMiles) => set({ radiusMiles }),
   setFilter: (activeFilter) => set({ activeFilter }),
   setSortBy: (sortBy) => set({ sortBy }),
