@@ -30,7 +30,7 @@ export const useLocationStore = create<LocationState>((set) => ({
   setLocation: (lat, lon, name) => {
     set({ lat, lon, name });
     // Fire-and-forget: persist to backend for admin visibility
-    api.put('/auth/me/location', { lat, lon }).catch(() => {});
+    api.put('/auth/me/location', { lat, lon, name }).catch(() => {});
   },
   setRadius: (radiusMiles) => set({ radiusMiles }),
   setFilter: (activeFilter) => set({ activeFilter }),
